@@ -1,0 +1,47 @@
+{
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "instagramclone-4ac6a",
+          "configurations": {
+            "android": "1:232975692935:android:2cfa91dca80eda8b5f3422",
+            "ios": "1:232975692935:ios:e3a5e2cc67f6c9055f3422",
+            "macos": "1:232975692935:ios:e3a5e2cc67f6c9055f3422",
+            "web": "1:232975692935:web:0e7691fc1e5323245f3422",
+            "windows": "1:232975692935:web:4388ccd55ec50aec5f3422"
+          }
+        }
+      },
+      "android": {
+        "default": {
+          "projectId": "instagramclone-4ac6a",
+          "appId": "1:232975692935:android:2cfa91dca80eda8b5f3422",
+          "fileOutput": "android/app/google-services.json"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8080
+    },
+    "storage": {
+      "port": 9199
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true,
+    "auth": {
+      "port": 9099
+    }
+  }
+}
