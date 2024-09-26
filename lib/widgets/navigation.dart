@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:insta_clone/screen/add_screen.dart';
 import '../screen/explore_screen.dart';
 import '../screen/home.dart';
 import '../screen/profile_screen.dart';
@@ -49,20 +50,26 @@ class _NavigationScreenState extends State<NavigationScreen> {
           unselectedItemColor: Colors.grey,
           currentIndex: _currentIndex,
           onTap: navigationTapped,
-          items: const [
-            BottomNavigationBarItem(
+          items: [
+            const BottomNavigationBarItem(
               icon: Icon(Icons.home),
               label: '',
             ),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
               icon: Icon(Icons.search),
               label: '',
             ),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
               icon: Icon(Icons.camera),
               label: '',
             ),
             BottomNavigationBarItem(
+                icon: Image.asset(
+                  'images/instagram-reels-icon.png',
+                  height: 20,
+                ),
+                label: ''),
+            const BottomNavigationBarItem(
               icon: Icon(Icons.person),
               label: '',
             ),
@@ -75,6 +82,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
         children: const [
           HomeScreen(),
           ExploreScreen(),
+          AddScreen(),
           ReelsScreen(),
           ProfileScreen(),
         ],

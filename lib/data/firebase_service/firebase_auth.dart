@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../util/exeption.dart';
-import 'firestor.dart';
+import 'firestore.dart';
 import 'storage.dart';
 
 class Authentication {
@@ -43,7 +43,7 @@ class Authentication {
 
           if (profile != File('')) {
             URL =
-                await StorageMethod().uploadImageToStorage('Profile', profile);
+                await StorageMethod().uploadImageToStorage('profile', profile);
           } else {
             URL = '';
           }
