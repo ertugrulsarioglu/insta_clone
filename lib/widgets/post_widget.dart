@@ -1,7 +1,12 @@
+import 'package:date_format/date_format.dart';
 import 'package:flutter/material.dart';
 
+import 'package:insta_clone/util/image_cached.dart';
+
 class PostWidget extends StatelessWidget {
-  const PostWidget({super.key});
+  // ignore: prefer_typing_uninitialized_variables
+  final snapshot;
+  const PostWidget(this.snapshot, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,16 +21,16 @@ class PostWidget extends StatelessWidget {
                 child: SizedBox(
                   width: 35,
                   height: 35,
-                  child: Image.asset('images/person.png'),
+                  child: CachedImage(snapshot['profileImage']),
                 ),
               ),
-              title: const Text(
-                'username',
-                style: TextStyle(fontSize: 13),
+              title: Text(
+                snapshot['username'],
+                style: const TextStyle(fontSize: 13),
               ),
-              subtitle: const Text(
-                'location',
-                style: TextStyle(fontSize: 11),
+              subtitle: Text(
+                snapshot['location'],
+                style: const TextStyle(fontSize: 11),
               ),
               trailing: const Icon(Icons.more_horiz),
             ),
@@ -36,10 +41,7 @@ class PostWidget extends StatelessWidget {
           child: SizedBox(
             // width: 375,
             height: 375,
-            child: Image.asset(
-              'images/post.jpg',
-              fit: BoxFit.cover,
-            ),
+            child: CachedImage(snapshot['postImage']),
           ),
         ),
         Container(
@@ -54,9 +56,9 @@ class PostWidget extends StatelessWidget {
                   const SizedBox(width: 14),
                   const Icon(Icons.favorite_outline, size: 25),
                   const SizedBox(width: 2),
-                  const Text(
-                    '13,9K',
-                    style: TextStyle(
+                  Text(
+                    snapshot['like'].length.toString(),
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -91,31 +93,33 @@ class PostWidget extends StatelessWidget {
                   ),
                 ],
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15.0),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 5, horizontal: 15.0),
                 child: Row(
                   children: [
                     Text(
-                      'username' ' ',
-                      style:
-                          TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                      snapshot['username'] + ' ',
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      'caption',
-                      style: TextStyle(
+                      snapshot['caption'],
+                      style: const TextStyle(
                         fontSize: 13,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.only(left: 15.0, top: 20, bottom: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 15.0, top: 20, bottom: 8),
                 child: Row(
                   children: [
                     Text(
-                      'dateformat',
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                      formatDate(
+                          snapshot['time'].toDate(), [yyyy, '-', mm, '-', dd]),
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),
                     ),
                   ],
                 ),

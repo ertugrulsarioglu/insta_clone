@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../widgets/post_widget.dart';
 
@@ -9,6 +11,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // ignore: unused_field
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,14 +47,27 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: CustomScrollView(
         slivers: [
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                return const PostWidget();
-              },
-              childCount: 5,
-            ),
-          ),
+          StreamBuilder(
+            stream: _firebaseFirestore
+                .collection('posts')
+                .orderBy('time', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              return SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  if (!snapshot.hasData) {
+                    return const Center(
+                        child: CircularProgressIndicator(
+                      color: Colors.black,
+                    ));
+                  }
+                  return PostWidget(snapshot.data!.docs[index].data());
+                },
+                    childCount:
+                        snapshot.data == null ? 0 : snapshot.data!.docs.length),
+              );
+            },
+          )
         ],
       ),
     );

@@ -42,21 +42,19 @@ class _AddPostScreenState extends State<AddPostScreen> {
       List<Widget> temp = [];
       for (var asset in media) {
         temp.add(
-          FutureBuilder(
-            future: asset.thumbnailDataWithSize(const ThumbnailSize(200, 200)),
+          FutureBuilder<File?>(
+            future: asset.file,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
-                return Container(
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: Image.memory(
-                          snapshot.data!,
-                          fit: BoxFit.cover,
-                        ),
+                return Stack(
+                  children: [
+                    Positioned.fill(
+                      child: Image.file(
+                        snapshot.data!,
+                        fit: BoxFit.cover,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 );
               }
               return Container();
