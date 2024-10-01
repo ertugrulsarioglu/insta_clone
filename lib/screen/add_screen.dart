@@ -1,6 +1,4 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:insta_clone/screen/add_post_screen.dart';
 import 'package:insta_clone/screen/add_reels_screen.dart';
 
@@ -27,6 +25,7 @@ class _AddScreenState extends State<AddScreen> {
     // TODO: implement dispose
     super.dispose();
     pageController.dispose();
+    _currentIndex = 0;
   }
 
   onPageChanged(int page) {

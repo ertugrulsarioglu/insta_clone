@@ -15,32 +15,51 @@ class PostWidget extends StatelessWidget {
         Container(
           height: 54,
           color: Colors.white,
-          child: Center(
-            child: ListTile(
-              leading: ClipOval(
-                child: SizedBox(
-                  width: 35,
-                  height: 35,
-                  child: CachedImage(snapshot['profileImage']),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              children: [
+                ClipOval(
+                  child: SizedBox(
+                    width: 35,
+                    height: 35,
+                    child: CachedImage(snapshot['profileImage']),
+                  ),
                 ),
-              ),
-              title: Text(
-                snapshot['username'],
-                style: const TextStyle(fontSize: 13),
-              ),
-              subtitle: Text(
-                snapshot['location'],
-                style: const TextStyle(fontSize: 11),
-              ),
-              trailing: const Icon(Icons.more_horiz),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: snapshot['location'] != null &&
+                            snapshot['location'].isNotEmpty
+                        ? MainAxisAlignment.spaceEvenly
+                        : MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        snapshot['username'],
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                      if (snapshot['location'] != null &&
+                          snapshot['location'].isNotEmpty)
+                        Text(
+                          snapshot['location'],
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.more_horiz),
+              ],
             ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.only(bottom: 10),
           child: SizedBox(
-            // width: 375,
-            height: 375,
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.width,
             child: CachedImage(snapshot['postImage']),
           ),
         ),

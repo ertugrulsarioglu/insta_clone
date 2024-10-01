@@ -42,19 +42,22 @@ class _AddPostScreenState extends State<AddPostScreen> {
       List<Widget> temp = [];
       for (var asset in media) {
         temp.add(
-          FutureBuilder<File?>(
-            future: asset.file,
+          FutureBuilder(
+            future: asset.thumbnailDataWithSize(const ThumbnailSize(640, 640)),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
-                return Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Image.file(
-                        snapshot.data!,
-                        fit: BoxFit.cover,
+                return SizedBox(
+                  height: MediaQuery.of(context).size.width,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Image.memory(
+                          snapshot.data!,
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               }
               return Container();
@@ -71,7 +74,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _fetchNewMedia();
   }

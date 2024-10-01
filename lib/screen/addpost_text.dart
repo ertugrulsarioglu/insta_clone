@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:insta_clone/data/firebase_service/firestore.dart';
 import 'package:insta_clone/data/firebase_service/storage.dart';
 

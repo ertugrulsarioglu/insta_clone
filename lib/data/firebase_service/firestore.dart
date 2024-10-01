@@ -47,6 +47,7 @@ class FirebaseFirestor {
     }
   }
 
+  // ignore: non_constant_identifier_names
   Future<bool> CreatePost({
     required String postImage,
     required String caption,
@@ -61,6 +62,27 @@ class FirebaseFirestor {
       'profileImage': user?.profile,
       'caption': caption,
       'location': location,
+      'uid': _auth.currentUser!.uid,
+      'postId': uid,
+      'like': [],
+      'time': data
+    });
+    return true;
+  }
+
+  // ignore: non_constant_identifier_names
+  Future<bool> CreateReels({
+    required String video,
+    required String caption,
+  }) async {
+    var uid = const Uuid().v4();
+    DateTime data = DateTime.now();
+    Usermodel? user = await getUser();
+    await _firebaseFirestore.collection('reels').doc(uid).set({
+      'reelsVideo': video,
+      'username': user?.username,
+      'profileImage': user?.profile,
+      'caption': caption,
       'uid': _auth.currentUser!.uid,
       'postId': uid,
       'like': [],

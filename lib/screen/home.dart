@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:insta_clone/widgets/shimmer.dart';
 import '../widgets/post_widget.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -55,12 +56,6 @@ class _HomeScreenState extends State<HomeScreen> {
             builder: (context, snapshot) {
               return SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
-                  if (!snapshot.hasData) {
-                    return const Center(
-                        child: CircularProgressIndicator(
-                      color: Colors.black,
-                    ));
-                  }
                   return PostWidget(snapshot.data!.docs[index].data());
                 },
                     childCount:
