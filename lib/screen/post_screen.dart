@@ -9,7 +9,7 @@ class PostScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(child: PostWidget(snapshot)),
+      body: SafeArea(child: PostWidget(snapshot, false)),
     );
   }
 }

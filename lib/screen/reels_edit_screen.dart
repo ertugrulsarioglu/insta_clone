@@ -1,9 +1,8 @@
 import 'dart:io';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:insta_clone/data/firebase_service/firestore.dart';
 import 'package:insta_clone/data/firebase_service/storage.dart';
+import 'package:insta_clone/widgets/sizedbox_spacer.dart';
 import 'package:video_player/video_player.dart';
 
 // ignore: must_be_immutable
@@ -18,6 +17,7 @@ class ReelsEditScreen extends StatefulWidget {
 class _ReelsEditScreenState extends State<ReelsEditScreen> {
   final captionController = TextEditingController();
   late VideoPlayerController controller;
+  // ignore: non_constant_identifier_names
   bool Loading = false;
 
   @override
@@ -69,7 +69,7 @@ class _ReelsEditScreenState extends State<ReelsEditScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Column(
                     children: [
-                      const SizedBox(height: 25),
+                      SizedBoxSpacer.h25,
                       SizedBox(
                         width: MediaQuery.of(context).size.width * 0.7,
                         height: MediaQuery.of(context).size.height * 0.7,
@@ -164,4 +164,3 @@ class _ReelsEditScreenState extends State<ReelsEditScreen> {
     );
   }
 }
-// 9. videodasin buna gecmeden once ses isini hallet

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:insta_clone/util/image_cached.dart';
 import 'package:insta_clone/widgets/shimmer.dart';
+import 'package:insta_clone/widgets/sizedbox_spacer.dart';
 import 'package:video_player/video_player.dart';
 
 class ReelsItem extends StatefulWidget {
@@ -131,7 +132,7 @@ class _ReelsItemState extends State<ReelsItem> {
                       child: CachedImage(widget.snapshot['profileImage']),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBoxSpacer.w10,
                   Text(
                     widget.snapshot['username'],
                     style: const TextStyle(
@@ -158,7 +159,7 @@ class _ReelsItemState extends State<ReelsItem> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              SizedBoxSpacer.h8,
               Text(
                 widget.snapshot['caption'],
                 style: const TextStyle(

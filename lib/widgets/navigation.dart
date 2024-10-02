@@ -43,38 +43,36 @@ class _NavigationScreenState extends State<NavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: Container(
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: Colors.black,
-          unselectedItemColor: Colors.grey,
-          currentIndex: _currentIndex,
-          onTap: navigationTapped,
-          items: [
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: '',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.search),
-              label: '',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.camera),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-                icon: Image.asset(
-                  'images/instagram-reels-icon.png',
-                  height: 20,
-                ),
-                label: ''),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: '',
-            ),
-          ],
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey,
+        currentIndex: _currentIndex,
+        onTap: navigationTapped,
+        items: [
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: '',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: '',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.camera),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+              icon: Image.asset(
+                'images/instagram-reels-icon.png',
+                height: 20,
+              ),
+              label: ''),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: '',
+          ),
+        ],
       ),
       body: PageView(
         controller: pageController,

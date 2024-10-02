@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:insta_clone/widgets/sizedbox_spacer.dart';
 
 import '../data/firebase_service/firebase_auth.dart';
 
@@ -134,6 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Image.asset('images/logo.jpg'),
       );
 
+  // ignore: non_constant_identifier_names
   Widget _CustomTextField(TextEditingController controller, IconData icon,
       String type, FocusNode focusNode) {
     return Container(
@@ -168,14 +170,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-}
-
-class SizedBoxSpacer {
-  static SizedBox get h10 => const SizedBox(height: 10);
-  static SizedBox get h15 => const SizedBox(height: 15);
-  static SizedBox get h120 => const SizedBox(height: 120);
-  static SizedBox get h100w96 =>
-      const SizedBox(height: 100, width: 96); // Özel genişlikte
-
-  // İsteğe bağlı olarak daha fazla boyut ekleyebilirsin
 }

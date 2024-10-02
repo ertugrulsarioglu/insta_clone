@@ -8,6 +8,7 @@ import 'package:insta_clone/model/usermodel.dart';
 import 'package:insta_clone/screen/post_screen.dart';
 import 'package:insta_clone/util/image_cached.dart';
 import 'package:insta_clone/widgets/shimmer.dart';
+import 'package:insta_clone/widgets/sizedbox_spacer.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -70,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
-                child: Head(_user!), // Kullanıcı bilgileri gösterilecek
+                child: head(_user!), // Kullanıcı bilgileri gösterilecek
               ),
               StreamBuilder(
                 stream: _firebaseFirestore
@@ -118,7 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget Head(Usermodel user) => Container(
+  Widget head(Usermodel user) => Container(
         padding: const EdgeInsets.only(bottom: 5),
         color: Colors.white,
         child: Column(
@@ -152,14 +153,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 fontSize: 16,
                               ),
                             ),
-                            SizedBox(height: 4), // Biraz boşluk ekleyelim.
+                            SizedBoxSpacer.h4,
                             Text(
                               'Posts',
                               style: TextStyle(fontSize: 13),
                             ),
                           ],
                         ),
-                        const SizedBox(width: 35),
+                        SizedBoxSpacer.w35,
                         Column(
                           children: [
                             Text(
@@ -169,7 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 fontSize: 16,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBoxSpacer.h4,
                             const Text(
                               'Followers',
                               style: TextStyle(fontSize: 13),
@@ -218,7 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBoxSpacer.h20,
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Container(
@@ -235,7 +236,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: const Text('Edit Your Profile'),
               ),
             ),
-            const SizedBox(height: 5),
+            SizedBoxSpacer.h5,
             const SizedBox(
               width: double.infinity,
               height: 30,
@@ -252,7 +253,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 5),
+            SizedBoxSpacer.h5,
           ],
         ),
       );
