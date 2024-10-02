@@ -1,8 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:insta_clone/screen/reels_edit_screen.dart';
 import 'package:photo_manager/photo_manager.dart';
+
+import 'reels_edit_screen.dart';
 
 class AddReelsScreen extends StatefulWidget {
   const AddReelsScreen({super.key});

@@ -1,8 +1,8 @@
 import 'package:date_format/date_format.dart';
 import 'package:flutter/material.dart';
-
-import 'package:insta_clone/util/image_cached.dart';
-import 'package:insta_clone/widgets/sizedbox_spacer.dart';
+import '../util/image_cached.dart';
+import 'comment.dart';
+import 'sizedbox_spacer.dart';
 
 class PostWidget extends StatelessWidget {
   // ignore: prefer_typing_uninitialized_variables
@@ -85,11 +85,39 @@ class PostWidget extends StatelessWidget {
                       ),
                     ),
                     SizedBoxSpacer.w17,
-                    Image.asset('images/comment.webp', height: 28),
+                    GestureDetector(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) {
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                bottom:
+                                    MediaQuery.of(context).viewInsets.bottom,
+                              ),
+                              child: DraggableScrollableSheet(
+                                initialChildSize: 0.6,
+                                minChildSize: 0.2,
+                                maxChildSize: 0.75,
+                                builder: (_, controller) {
+                                  return Comment(
+                                    type: 'posts',
+                                    postId: snapshot['postId'],
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      child: Image.asset('images/comment.webp', height: 28),
+                    ),
                     const SizedBox(width: 2),
-                    const Text(
-                      '156',
-                      style: TextStyle(
+                    Text(
+                      snapshot['commentCount'].toString(),
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),

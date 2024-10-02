@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:insta_clone/screen/add_screen.dart';
+
+import '../screen/add_screen.dart';
 import '../screen/explore_screen.dart';
 import '../screen/home.dart';
 import '../screen/profile_screen.dart';

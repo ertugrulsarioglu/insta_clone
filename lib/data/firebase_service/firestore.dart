@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:insta_clone/model/usermodel.dart';
-import 'package:insta_clone/util/exeption.dart';
+import '../../model/usermodel.dart';
+import '../../util/exeption.dart';
 import 'package:uuid/uuid.dart';
 
 class FirebaseFirestor {
@@ -89,5 +89,36 @@ class FirebaseFirestor {
       'time': data
     });
     return true;
+  }
+
+  // ignore: non_constant_identifier_names
+  Future<bool> Comments({
+    required String comment,
+    required String postId,
+    required String type, // 'posts' veya 'reels' için
+  }) async {
+    var commentId = const Uuid().v4();
+    Usermodel? user = await getUser();
+
+    try {
+      DocumentReference postRef =
+          _firebaseFirestore.collection(type).doc(postId);
+
+      await postRef.collection('comments').doc(commentId).set({
+        'comment': comment,
+        'username': user?.username,
+        'profileImage': user?.profile,
+        'commentId': commentId,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      await postRef.update({'commentCount': FieldValue.increment(1)});
+
+      print('Yorum başarıyla eklendi: $commentId');
+      return true;
+    } catch (e) {
+      print('Yorum eklenirken hata oluştu: $e');
+      return false;
+    }
   }
 }

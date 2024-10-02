@@ -3,12 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:insta_clone/data/firebase_service/firestore.dart';
-import 'package:insta_clone/model/usermodel.dart';
-import 'package:insta_clone/screen/post_screen.dart';
-import 'package:insta_clone/util/image_cached.dart';
-import 'package:insta_clone/widgets/shimmer.dart';
-import 'package:insta_clone/widgets/sizedbox_spacer.dart';
+import '../data/firebase_service/firestore.dart';
+import '../model/usermodel.dart';
+import 'post_screen.dart';
+import '../util/image_cached.dart';
+import '../widgets/shimmer.dart';
+import '../widgets/sizedbox_spacer.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ProfileScreen extends StatefulWidget {

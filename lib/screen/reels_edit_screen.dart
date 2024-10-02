@@ -1,9 +1,11 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:insta_clone/data/firebase_service/firestore.dart';
-import 'package:insta_clone/data/firebase_service/storage.dart';
-import 'package:insta_clone/widgets/sizedbox_spacer.dart';
 import 'package:video_player/video_player.dart';
+
+import '../data/firebase_service/firestore.dart';
+import '../data/firebase_service/storage.dart';
+import '../widgets/sizedbox_spacer.dart';
 
 // ignore: must_be_immutable
 class ReelsEditScreen extends StatefulWidget {

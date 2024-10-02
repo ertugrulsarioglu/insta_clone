@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:insta_clone/screen/post_screen.dart';
-import 'package:insta_clone/util/image_cached.dart';
-import 'package:insta_clone/widgets/shimmer.dart';
-import 'package:insta_clone/widgets/sizedbox_spacer.dart';
+
+import '../util/image_cached.dart';
+import '../widgets/shimmer.dart';
+import '../widgets/sizedbox_spacer.dart';
+import 'post_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -21,10 +22,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: searchBox,
+      ),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            searchBox,
             StreamBuilder(
               stream: _firebaseFirestore.collection('posts').snapshots(),
               builder: (context, snapshot) {
@@ -84,43 +89,39 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  SliverToBoxAdapter get searchBox {
-    return SliverToBoxAdapter(
+  Widget get searchBox {
+    return Container(
+      height: 45,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: const BorderRadius.all(
+          Radius.circular(10),
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-        child: Container(
-          width: double.infinity,
-          height: MediaQuery.of(context).size.height * 0.05,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            borderRadius: const BorderRadius.all(
-              Radius.circular(10),
+        padding: const EdgeInsets.symmetric(horizontal: 5),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.search,
+              color: Colors.black,
             ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 5),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.search,
-                  color: Colors.black,
+            SizedBoxSpacer.w10,
+            Expanded(
+              child: TextField(
+                controller: searchController,
+                cursorColor: Colors.black,
+                textAlignVertical: TextAlignVertical.center,
+                textAlign: TextAlign.left,
+                decoration: const InputDecoration(
+                  hintText: 'Kullanıcı Ara',
+                  hintStyle: TextStyle(color: Colors.black),
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
                 ),
-                SizedBoxSpacer.w10,
-                Expanded(
-                    child: TextField(
-                  controller: searchController,
-                  cursorColor: Colors.black,
-                  textAlign: TextAlign.left,
-                  decoration: const InputDecoration(
-                    hintText: 'Search User',
-                    hintStyle: TextStyle(color: Colors.black),
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                  ),
-                ))
-              ],
-            ),
-          ),
+              ),
+            )
+          ],
         ),
       ),
     );

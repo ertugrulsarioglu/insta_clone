@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:insta_clone/screen/add_post_screen.dart';
-import 'package:insta_clone/screen/add_reels_screen.dart';
+
+import 'add_post_screen.dart';
+import 'add_reels_screen.dart';
 
 class AddScreen extends StatefulWidget {
   const AddScreen({super.key});

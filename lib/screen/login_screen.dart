@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:insta_clone/widgets/sizedbox_spacer.dart';
+import '../widgets/sizedbox_spacer.dart';
 
 import '../data/firebase_service/firebase_auth.dart';
 

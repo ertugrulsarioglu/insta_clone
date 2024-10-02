@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:insta_clone/util/image_cached.dart';
-import 'package:insta_clone/widgets/shimmer.dart';
-import 'package:insta_clone/widgets/sizedbox_spacer.dart';
+import 'package:flutter/widgets.dart';
+import '../util/image_cached.dart';
+import 'comment.dart';
+import 'shimmer.dart';
+import 'sizedbox_spacer.dart';
 import 'package:video_player/video_player.dart';
 
 class ReelsItem extends StatefulWidget {
@@ -82,34 +84,61 @@ class _ReelsItemState extends State<ReelsItem> {
         Positioned(
           top: MediaQuery.of(context).size.height * 0.58,
           right: MediaQuery.of(context).size.width * 0.03,
-          child: const Column(
+          child: Column(
             children: [
-              Icon(
+              const Icon(
                 Icons.favorite_border,
                 color: Colors.white,
                 size: 28,
               ),
-              Text(
+              const Text(
                 '0',
                 style: TextStyle(fontSize: 12, color: Colors.white),
               ),
-              SizedBox(height: 10),
-              Icon(
-                Icons.comment,
-                color: Colors.white,
-                size: 28,
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) {
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.of(context).viewInsets.bottom,
+                        ),
+                        child: DraggableScrollableSheet(
+                          initialChildSize: 0.6,
+                          minChildSize: 0.2,
+                          maxChildSize: 0.75,
+                          builder: (_, controller) {
+                            return Comment(
+                              type: 'posts',
+                              postId: widget.snapshot['postId'],
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  );
+                },
+                child: const Icon(
+                  Icons.comment,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
               Text(
-                '0',
-                style: TextStyle(fontSize: 12, color: Colors.white),
+                widget.snapshot['commentCount'].toString(),
+                style: const TextStyle(fontSize: 12, color: Colors.white),
               ),
-              SizedBox(height: 10),
-              Icon(
+              const SizedBox(height: 10),
+              const Icon(
                 Icons.send,
                 color: Colors.white,
                 size: 28,
               ),
-              Text(
+              const Text(
                 '0',
                 style: TextStyle(fontSize: 12, color: Colors.white),
               ),
