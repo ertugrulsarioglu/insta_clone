@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:insta_clone/widgets/like_animation.dart';
+import '../data/firebase_service/firestore.dart';
 import '../util/image_cached.dart';
 import 'comment.dart';
 import 'shimmer.dart';
@@ -18,10 +20,14 @@ class _ReelsItemState extends State<ReelsItem> {
   late VideoPlayerController controller;
   bool play = true;
   bool isInitialized = false;
+  bool isAnimating = false;
+  String user = '';
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void initState() {
     super.initState();
+    user = _auth.currentUser!.uid;
     initializeVideoPlayer();
   }
 
@@ -55,6 +61,17 @@ class _ReelsItemState extends State<ReelsItem> {
       alignment: Alignment.bottomRight,
       children: [
         GestureDetector(
+          onDoubleTap: () {
+            FirebaseFirestor().like(
+              like: widget.snapshot['like'],
+              type: 'reels',
+              uid: user,
+              postId: widget.snapshot['postId'],
+            );
+            setState(() {
+              isAnimating = true;
+            });
+          },
           onTap: () {
             setState(() {
               play = !play;
@@ -81,19 +98,60 @@ class _ReelsItemState extends State<ReelsItem> {
               ),
             ),
           ),
+        Center(
+          child: AnimatedOpacity(
+            opacity: isAnimating ? 1 : 0,
+            duration: const Duration(milliseconds: 200),
+            child: LikeAnimation(
+              isAnimation: isAnimating,
+              duration: const Duration(milliseconds: 400),
+              iconLike: false,
+              end: () {
+                setState(() {
+                  isAnimating = false;
+                });
+              },
+              child: const Icon(
+                Icons.favorite,
+                size: 100,
+                color: Colors.red,
+              ),
+            ),
+          ),
+        ),
         Positioned(
           top: MediaQuery.of(context).size.height * 0.58,
           right: MediaQuery.of(context).size.width * 0.03,
           child: Column(
             children: [
-              const Icon(
-                Icons.favorite_border,
-                color: Colors.white,
-                size: 28,
+              LikeAnimation(
+                isAnimation: widget.snapshot['like']?.contains(user),
+                child: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      isAnimating = true;
+                    });
+                    FirebaseFirestor().like(
+                      like: widget.snapshot['like'],
+                      type: 'reels',
+                      uid: user,
+                      postId: widget.snapshot['postId'],
+                    );
+                  },
+                  icon: Icon(
+                    widget.snapshot['like']?.contains(user)
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    color: widget.snapshot['like']?.contains(user)
+                        ? Colors.red
+                        : Colors.white,
+                    size: 24,
+                  ),
+                ),
               ),
-              const Text(
-                '0',
-                style: TextStyle(fontSize: 12, color: Colors.white),
+              Text(
+                widget.snapshot['like'].length.toString(),
+                style: const TextStyle(fontSize: 12, color: Colors.white),
               ),
               const SizedBox(height: 10),
               GestureDetector(
@@ -113,7 +171,7 @@ class _ReelsItemState extends State<ReelsItem> {
                           maxChildSize: 0.75,
                           builder: (_, controller) {
                             return Comment(
-                              type: 'posts',
+                              type: 'reels',
                               postId: widget.snapshot['postId'],
                             );
                           },
@@ -129,7 +187,9 @@ class _ReelsItemState extends State<ReelsItem> {
                 ),
               ),
               Text(
-                widget.snapshot['commentCount'].toString(),
+                widget.snapshot['commentCount'] == null
+                    ? '0'
+                    : widget.snapshot['commentCount'].toString(),
                 style: const TextStyle(fontSize: 12, color: Colors.white),
               ),
               const SizedBox(height: 10),

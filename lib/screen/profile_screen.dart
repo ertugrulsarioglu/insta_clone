@@ -11,8 +11,10 @@ import '../widgets/shimmer.dart';
 import '../widgets/sizedbox_spacer.dart';
 import 'package:shimmer/shimmer.dart';
 
+// ignore: must_be_immutable
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  String Uid;
+  ProfileScreen({super.key, required this.Uid});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -21,12 +23,54 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  late int postLenght = 0;
   Usermodel? _user;
+  bool yours = false;
+  List followings = [];
+  bool isfollow = false;
+
+  @override
+  void initState() {
+    super.initState();
+    getdata();
+    if (_auth.currentUser!.uid == widget.Uid) {
+      setState(() {
+        yours = true;
+      });
+    }
+  }
+
+  getdata() async {
+    DocumentSnapshot snap = await _firebaseFirestore
+        .collection('users')
+        .doc(_auth.currentUser!.uid)
+        .get();
+    List follow = (snap.data()! as dynamic)['following'];
+    if (follow.contains(widget.Uid)) {
+      setState(() {
+        isfollow = true;
+      });
+    }
+  }
+
+  Future<void> _toggleFollow() async {
+    await FirebaseFirestor().follow(uid: widget.Uid);
+    setState(() {
+      isfollow = !isfollow;
+    });
+    // Kullanıcı verilerini yeniden yükle
+    final updatedUser = await FirebaseFirestor().getUser(uidd: widget.Uid);
+    if (updatedUser != null) {
+      setState(() {
+        _user = updatedUser;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: FirebaseFirestor().getUser(),
+      future: FirebaseFirestor().getUser(uidd: widget.Uid),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           // Veri yüklenirken göstereceğimiz loading ekranı
@@ -77,7 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 stream: _firebaseFirestore
                     .collection('posts')
                     .orderBy('time', descending: true)
-                    .where('uid', isEqualTo: _auth.currentUser!.uid)
+                    .where('uid', isEqualTo: widget.Uid)
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
@@ -91,11 +135,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     );
                   }
-                  var snapLength = snapshot.data!.docs.length;
+
+                  postLenght = snapshot.data!.docs.length;
+
                   return SliverGrid(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
-                          var snap = snapshot.data!.docs[index];
+                          final snap = snapshot.data!.docs[index];
                           return GestureDetector(
                               onTap: () {
                                 Navigator.of(context).push(MaterialPageRoute(
@@ -104,7 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               },
                               child: CachedImage(snap['postImage']));
                         },
-                        childCount: snapLength,
+                        childCount: postLenght,
                       ),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
@@ -144,17 +190,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         const SizedBox(width: 25),
-                        const Column(
+                        Column(
                           children: [
                             Text(
-                              '0',
-                              style: TextStyle(
+                              user.posts.length.toString(),
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),
                             ),
                             SizedBoxSpacer.h4,
-                            Text(
+                            const Text(
                               'Posts',
                               style: TextStyle(fontSize: 13),
                             ),
@@ -220,23 +266,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             SizedBoxSpacer.h20,
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Container(
-                alignment: Alignment.center,
-                height: 30,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(5),
-                  border: Border.all(
-                    color: Colors.grey.shade400,
+            Visibility(
+              visible: !isfollow,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: GestureDetector(
+                  onTap: () {
+                    if (!yours) {
+                      _toggleFollow();
+                    }
+                  },
+                  child: Container(
+                    alignment: Alignment.center,
+                    height: 30,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: yours ? Colors.white : Colors.blue,
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(
+                        color: yours ? Colors.grey.shade400 : Colors.blue,
+                      ),
+                    ),
+                    child: yours
+                        ? const Text(
+                            'Edit Your Profile',
+                            style: TextStyle(color: Colors.black, fontSize: 14),
+                          )
+                        : const Text(
+                            'Follow',
+                            style: TextStyle(color: Colors.white, fontSize: 14),
+                          ),
                   ),
                 ),
-                child: const Text('Edit Your Profile'),
               ),
             ),
-            SizedBoxSpacer.h5,
+            if (isfollow)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _toggleFollow,
+                        child: Container(
+                          alignment: Alignment.center,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(
+                              color: Colors.grey.shade200,
+                            ),
+                          ),
+                          child: const Text(
+                            'Unfollow',
+                            style: TextStyle(color: Colors.black, fontSize: 14),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBoxSpacer.w10,
+                    Expanded(
+                      child: Container(
+                        alignment: Alignment.center,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(5),
+                          border: Border.all(
+                            color: Colors.grey.shade200,
+                          ),
+                        ),
+                        child: const Text(
+                          'Message',
+                          style: TextStyle(color: Colors.black, fontSize: 14),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            SizedBoxSpacer.h10,
             const SizedBox(
               width: double.infinity,
               height: 30,

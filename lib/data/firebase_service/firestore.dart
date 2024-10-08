@@ -28,20 +28,30 @@ class FirebaseFirestor {
     return true;
   }
 
-  Future<Usermodel?> getUser() async {
+  Future<Usermodel?> getUser({String? uidd}) async {
     try {
       final user = await _firebaseFirestore
           .collection('users')
-          .doc(_auth.currentUser!.uid)
+          .doc(uidd ?? _auth.currentUser!.uid)
           .get();
       final snapuser = user.data()!;
+
+      final posts = await _firebaseFirestore
+          .collection('posts')
+          .where('uid', isEqualTo: uidd ?? _auth.currentUser!.uid)
+          .get();
+
+      List<String> postIds = posts.docs.map((doc) => doc.id).toList();
+
       return Usermodel(
-          snapuser['bio'],
-          snapuser['email'],
-          snapuser['followers'],
-          snapuser['following'],
-          snapuser['profile'],
-          snapuser['username']);
+        snapuser['bio'],
+        snapuser['email'],
+        snapuser['followers'],
+        snapuser['following'],
+        snapuser['profile'],
+        snapuser['username'],
+        posts: postIds,
+      );
     } on FirebaseException catch (e) {
       throw exceptions(e.message.toString());
     }
@@ -119,6 +129,70 @@ class FirebaseFirestor {
     } catch (e) {
       print('Yorum eklenirken hata oluştu: $e');
       return false;
+    }
+  }
+
+  Future<String> like({
+    required List like,
+    required String type,
+    required String uid,
+    required String postId,
+  }) async {
+    String res = 'some error';
+    try {
+      if (like.contains(uid)) {
+        _firebaseFirestore.collection(type).doc(postId).update({
+          'like': FieldValue.arrayRemove([uid]),
+        });
+      } else {
+        _firebaseFirestore.collection(type).doc(postId).update({
+          'like': FieldValue.arrayUnion([uid]),
+        });
+      }
+      res = 'success';
+    } on Exception catch (e) {
+      res = e.toString();
+    }
+    return res;
+  }
+
+  Future<Usermodel?> follow({
+    required String uid,
+  }) async {
+    try {
+      DocumentSnapshot snap = await _firebaseFirestore
+          .collection('users')
+          .doc(_auth.currentUser!.uid)
+          .get();
+      List follow = (snap.data()! as dynamic)['following'];
+
+      if (follow.contains(uid)) {
+        await _firebaseFirestore
+            .collection('users')
+            .doc(_auth.currentUser!.uid)
+            .update({
+          'following': FieldValue.arrayRemove([uid]),
+        });
+        await _firebaseFirestore.collection('users').doc(uid).update({
+          'followers': FieldValue.arrayRemove([_auth.currentUser!.uid]),
+        });
+      } else {
+        await _firebaseFirestore
+            .collection('users')
+            .doc(_auth.currentUser!.uid)
+            .update({
+          'following': FieldValue.arrayUnion([uid]),
+        });
+        await _firebaseFirestore.collection('users').doc(uid).update({
+          'followers': FieldValue.arrayUnion([_auth.currentUser!.uid]),
+        });
+      }
+
+      // Güncellenmiş kullanıcı bilgilerini al ve döndür
+      return await getUser(uidd: uid);
+    } catch (e) {
+      print(e.toString());
+      return null;
     }
   }
 }

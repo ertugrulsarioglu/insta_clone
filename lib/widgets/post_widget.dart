@@ -1,20 +1,64 @@
 import 'package:date_format/date_format.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:insta_clone/widgets/like_animation.dart';
+import '../data/firebase_service/firestore.dart';
 import '../util/image_cached.dart';
 import 'comment.dart';
 import 'sizedbox_spacer.dart';
 
-class PostWidget extends StatelessWidget {
-  // ignore: prefer_typing_uninitialized_variables
-  final snapshot;
+class PostWidget extends StatefulWidget {
+  final dynamic snapshot;
   final bool hasAppBar;
+  final VoidCallback? onLikeUpdated;
 
-  const PostWidget(this.snapshot, this.hasAppBar, {super.key});
+  const PostWidget(this.snapshot, this.hasAppBar,
+      {this.onLikeUpdated, super.key});
+
+  @override
+  State<PostWidget> createState() => _PostWidgetState();
+}
+
+class _PostWidgetState extends State<PostWidget> {
+  bool isAnimating = false;
+  String user = '';
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  int likeCount = 0;
+  bool isLiked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    user = _auth.currentUser!.uid;
+    likeCount = widget.snapshot['like'].length;
+    isLiked = widget.snapshot['like']?.contains(user) ?? false;
+  }
+
+  void toggleLike() {
+    setState(() {
+      isLiked = !isLiked;
+      likeCount += isLiked ? 1 : -1;
+      isAnimating = isLiked;
+    });
+
+    FirebaseFirestor()
+        .like(
+      like: widget.snapshot['like'],
+      type: 'posts',
+      uid: user,
+      postId: widget.snapshot['postId'],
+    )
+        .then((_) {
+      if (widget.onLikeUpdated != null) {
+        widget.onLikeUpdated!();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(top: hasAppBar ? 0.0 : 10),
+      padding: EdgeInsets.only(top: widget.hasAppBar ? 0.0 : 10),
       child: Column(
         children: [
           Container(
@@ -28,28 +72,28 @@ class PostWidget extends StatelessWidget {
                     child: SizedBox(
                       width: 35,
                       height: 35,
-                      child: CachedImage(snapshot['profileImage']),
+                      child: CachedImage(widget.snapshot['profileImage']),
                     ),
                   ),
                   SizedBoxSpacer.w10,
                   Expanded(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: snapshot['location'] != null &&
-                              snapshot['location'].isNotEmpty
+                      mainAxisAlignment: widget.snapshot['location'] != null &&
+                              widget.snapshot['location'].isNotEmpty
                           ? MainAxisAlignment.spaceEvenly
                           : MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          snapshot['username'],
+                          widget.snapshot['username'],
                           style: const TextStyle(
                               fontSize: 13, fontWeight: FontWeight.bold),
                         ),
-                        if (snapshot['location'] != null &&
-                            snapshot['location'].isNotEmpty)
+                        if (widget.snapshot['location'] != null &&
+                            widget.snapshot['location'].isNotEmpty)
                           Text(
-                            snapshot['location'],
+                            widget.snapshot['location'],
                             style: const TextStyle(fontSize: 11),
                           ),
                       ],
@@ -60,12 +104,48 @@ class PostWidget extends StatelessWidget {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.width,
-              child: CachedImage(snapshot['postImage']),
+          GestureDetector(
+            onDoubleTap: () {
+              if (!isLiked) {
+                toggleLike();
+              }
+              setState(() {
+                isAnimating = true;
+              });
+            },
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.width,
+                    child: CachedImage(
+                      widget.snapshot['postImage'],
+                    ),
+                  ),
+                ),
+                AnimatedOpacity(
+                  opacity: isAnimating ? 1 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: LikeAnimation(
+                    isAnimation: isAnimating,
+                    duration: const Duration(milliseconds: 400),
+                    iconLike: false,
+                    end: () {
+                      setState(() {
+                        isAnimating = false;
+                      });
+                    },
+                    child: const Icon(
+                      Icons.favorite,
+                      size: 100,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           Container(
@@ -75,10 +155,20 @@ class PostWidget extends StatelessWidget {
                 Row(
                   children: [
                     SizedBoxSpacer.w14,
-                    const Icon(Icons.favorite_outline, size: 25),
+                    LikeAnimation(
+                      isAnimation: isAnimating,
+                      child: IconButton(
+                        onPressed: toggleLike,
+                        icon: Icon(
+                          isLiked ? Icons.favorite : Icons.favorite_border,
+                          color: isLiked ? Colors.red : Colors.black,
+                          size: 24,
+                        ),
+                      ),
+                    ),
                     SizedBoxSpacer.w2,
                     Text(
-                      snapshot['like'].length.toString(),
+                      likeCount.toString(),
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -104,7 +194,7 @@ class PostWidget extends StatelessWidget {
                                 builder: (_, controller) {
                                   return Comment(
                                     type: 'posts',
-                                    postId: snapshot['postId'],
+                                    postId: widget.snapshot['postId'],
                                   );
                                 },
                               ),
@@ -116,7 +206,9 @@ class PostWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: 2),
                     Text(
-                      snapshot['commentCount'].toString(),
+                      widget.snapshot['commentCount'] == null
+                          ? '0'
+                          : widget.snapshot['commentCount'].toString(),
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -148,12 +240,12 @@ class PostWidget extends StatelessWidget {
                   child: Row(
                     children: [
                       Text(
-                        snapshot['username'] + ' ',
+                        widget.snapshot['username'] + ' ',
                         style: const TextStyle(
                             fontSize: 13, fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        snapshot['caption'],
+                        widget.snapshot['caption'],
                         style: const TextStyle(
                           fontSize: 13,
                         ),
@@ -167,7 +259,7 @@ class PostWidget extends StatelessWidget {
                   child: Row(
                     children: [
                       Text(
-                        formatDate(snapshot['time'].toDate(),
+                        formatDate(widget.snapshot['time'].toDate(),
                             [yyyy, '-', mm, '-', dd]),
                         style:
                             const TextStyle(fontSize: 11, color: Colors.grey),

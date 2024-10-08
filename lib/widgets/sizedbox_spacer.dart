@@ -13,6 +13,7 @@ mixin SizedBoxSpacer {
   static const SizedBox w2 = SizedBox(width: 2);
   static const SizedBox w10 = SizedBox(width: 10);
   static const SizedBox w14 = SizedBox(width: 14);
+  static const SizedBox w15 = SizedBox(width: 15);
   static const SizedBox w17 = SizedBox(width: 17);
   static const SizedBox w35 = SizedBox(width: 35);
 }
