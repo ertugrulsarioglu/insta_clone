@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:insta_clone/screen/profile_screen.dart';
+import 'profile_screen.dart';
 
 import '../util/image_cached.dart';
 import '../widgets/shimmer.dart';
@@ -57,6 +57,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             return GestureDetector(
                               onTap: () {
                                 if (data != null) {
+                                  FocusScope.of(context).unfocus();
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -129,6 +130,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                 SizedBoxSpacer.h10,
                                 GestureDetector(
                                   onTap: () {
+                                    FocusScope.of(context).unfocus();
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(

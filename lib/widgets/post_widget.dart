@@ -1,10 +1,12 @@
 import 'package:date_format/date_format.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:insta_clone/widgets/like_animation.dart';
+
 import '../data/firebase_service/firestore.dart';
+import '../screen/profile_screen.dart';
 import '../util/image_cached.dart';
 import 'comment.dart';
+import 'like_animation.dart';
 import 'sizedbox_spacer.dart';
 
 class PostWidget extends StatefulWidget {
@@ -85,10 +87,22 @@ class _PostWidgetState extends State<PostWidget> {
                           : MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          widget.snapshot['username'],
-                          style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.bold),
+                        GestureDetector(
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ProfileScreen(Uid: widget.snapshot['uid']),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            widget.snapshot['username'],
+                            style: const TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.bold),
+                          ),
                         ),
                         if (widget.snapshot['location'] != null &&
                             widget.snapshot['location'].isNotEmpty)
@@ -153,11 +167,14 @@ class _PostWidgetState extends State<PostWidget> {
             child: Column(
               children: [
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBoxSpacer.w14,
+                    SizedBoxSpacer.w2,
                     LikeAnimation(
                       isAnimation: isAnimating,
                       child: IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                         onPressed: toggleLike,
                         icon: Icon(
                           isLiked ? Icons.favorite : Icons.favorite_border,
@@ -166,7 +183,6 @@ class _PostWidgetState extends State<PostWidget> {
                         ),
                       ),
                     ),
-                    SizedBoxSpacer.w2,
                     Text(
                       likeCount.toString(),
                       style: const TextStyle(
@@ -204,7 +220,7 @@ class _PostWidgetState extends State<PostWidget> {
                       },
                       child: Image.asset('images/comment.webp', height: 28),
                     ),
-                    const SizedBox(width: 2),
+                    SizedBoxSpacer.w2,
                     Text(
                       widget.snapshot['commentCount'] == null
                           ? '0'
@@ -214,7 +230,7 @@ class _PostWidgetState extends State<PostWidget> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(width: 17),
+                    SizedBoxSpacer.w15,
                     Image.asset('images/send.jpg', height: 28),
                     const SizedBox(width: 2),
                     const Text(

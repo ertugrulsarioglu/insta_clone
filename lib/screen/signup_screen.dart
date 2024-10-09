@@ -1,9 +1,10 @@
+// ignore_for_file: non_constant_identifier_names, unused_element
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import '../data/firebase_service/firebase_auth.dart';
-import '../util/dialog.dart';
 import '../util/exeption.dart';
 import '../util/imagepicker.dart';
 
@@ -29,9 +30,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
   late FocusNode passwordConfirmF = FocusNode();
   File? _imageFile;
 
+  bool _isPasswordVisible = false;
+  bool _isPasswordConfirmVisible = false;
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     emailF = FocusNode();
     emailF.addListener(() {
@@ -61,7 +66,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
     super.dispose();
     emailF.dispose();
     usernameF.dispose();
@@ -73,6 +77,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Colors.white,
       body: SafeArea(
           child: ListView(
@@ -166,16 +171,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: InkWell(
           onTap: () async {
-            try {
-              await Authentication().signUp(
-                  email: emailController.text.trim(),
-                  password: passwordConfirmController.text.trim(),
-                  passwordConfirme: passwordConfirmController.text.trim(),
-                  username: usernameController.text.trim(),
-                  bio: bioController.text.trim(),
-                  profile: _imageFile ?? File(''));
-            } on exceptions catch (e) {
-              dialogBuilder(context, e.massage);
+            if (_validateInputs()) {
+              try {
+                await Authentication().signUp(
+                    email: emailController.text.trim(),
+                    password: passwordController.text.trim(),
+                    passwordConfirme: passwordConfirmController.text.trim(),
+                    username: usernameController.text.trim(),
+                    bio: bioController.text.trim(),
+                    profile: _imageFile ?? File(''));
+              } on exceptions catch (e) {
+                _showSnackBar(e.massage);
+              }
             }
           },
           child: Container(
@@ -212,6 +219,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Widget _CustomTextField(TextEditingController controller, IconData icon,
       String type, FocusNode focusNode) {
+    bool isPassword = type.toLowerCase().contains('password');
     return Container(
       height: 44,
       decoration: BoxDecoration(
@@ -224,12 +232,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
           style: const TextStyle(fontSize: 18, color: Colors.black),
           controller: controller,
           focusNode: focusNode,
+          obscureText: isPassword &&
+              ((type == 'Password' && !_isPasswordVisible) ||
+                  (type == 'PasswordConfirm' && !_isPasswordConfirmVisible)),
           decoration: InputDecoration(
               hintText: type,
               prefixIcon: Icon(
                 icon,
                 color: focusNode.hasFocus ? Colors.black : Colors.grey,
               ),
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        (type == 'Password'
+                                ? _isPasswordVisible
+                                : _isPasswordConfirmVisible)
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if (type == 'Password') {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          } else {
+                            _isPasswordConfirmVisible =
+                                !_isPasswordConfirmVisible;
+                          }
+                        });
+                      },
+                    )
+                  : null,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
               enabledBorder: OutlineInputBorder(
@@ -241,6 +274,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 borderSide: const BorderSide(color: Colors.black, width: 2),
               )),
         ),
+      ),
+    );
+  }
+
+  bool _validateInputs() {
+    if (emailController.text.isEmpty) {
+      _showSnackBar('Please enter an email address.');
+      return false;
+    }
+    if (passwordController.text.length < 6) {
+      _showSnackBar('Password must be at least 6 characters long.');
+      return false;
+    }
+    if (passwordController.text != passwordConfirmController.text) {
+      _showSnackBar('Passwords do not match.');
+      return false;
+    }
+    return true;
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 3),
       ),
     );
   }

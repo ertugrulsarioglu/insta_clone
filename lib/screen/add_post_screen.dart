@@ -1,8 +1,6 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
-
 import 'addpost_text.dart';
 
 class AddPostScreen extends StatefulWidget {
@@ -83,32 +81,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          'New Post',
-          style: TextStyle(color: Colors.black),
-        ),
-        actions: [
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => AddPostTextScreen(_file!),
-                  ));
-                },
-                child: const Text(
-                  'Next',
-                  style: TextStyle(fontSize: 15, color: Colors.blue),
-                ),
-              ),
-            ),
-          )
-        ],
-      ),
+      appBar: _appBar(context),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -165,6 +138,35 @@ class _AddPostScreenState extends State<AddPostScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  AppBar _appBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      title: const Text(
+        'New Post',
+        style: TextStyle(color: Colors.black),
+      ),
+      actions: [
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => AddPostTextScreen(_file!),
+                ));
+              },
+              child: const Text(
+                'Next',
+                style: TextStyle(fontSize: 15, color: Colors.blue),
+              ),
+            ),
+          ),
+        )
+      ],
     );
   }
 }

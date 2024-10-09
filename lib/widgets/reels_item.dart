@@ -1,12 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:insta_clone/widgets/like_animation.dart';
+import 'package:video_player/video_player.dart';
+
 import '../data/firebase_service/firestore.dart';
+import '../model/usermodel.dart';
+import '../screen/profile_screen.dart';
 import '../util/image_cached.dart';
 import 'comment.dart';
+import 'like_animation.dart';
 import 'shimmer.dart';
 import 'sizedbox_spacer.dart';
-import 'package:video_player/video_player.dart';
 
 class ReelsItem extends StatefulWidget {
   final snapshot;
@@ -23,12 +26,35 @@ class _ReelsItemState extends State<ReelsItem> {
   bool isAnimating = false;
   String user = '';
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  bool isFollowing = false;
+  int likeCount = 0;
+  bool isLiked = false;
 
   @override
   void initState() {
     super.initState();
     user = _auth.currentUser!.uid;
     initializeVideoPlayer();
+    checkFollowStatus();
+    likeCount = widget.snapshot['like'].length;
+    isLiked = widget.snapshot['like']?.contains(user) ?? false;
+  }
+
+  Future<void> checkFollowStatus() async {
+    Usermodel? currentUser = await FirebaseFirestor().getUser();
+    if (mounted) {
+      setState(() {
+        isFollowing =
+            currentUser?.following.contains(widget.snapshot['uid']) ?? false;
+      });
+    }
+  }
+
+  void toggleFollow() {
+    setState(() {
+      isFollowing = !isFollowing;
+    });
+    FirebaseFirestor().follow(uid: widget.snapshot['uid']);
   }
 
   Future<void> initializeVideoPlayer() async {
@@ -47,6 +73,21 @@ class _ReelsItemState extends State<ReelsItem> {
     }
   }
 
+  void toggleLike() {
+    setState(() {
+      isLiked = !isLiked;
+      likeCount += isLiked ? 1 : -1;
+      isAnimating = isLiked;
+    });
+
+    FirebaseFirestor().like(
+      like: widget.snapshot['like'],
+      type: 'reels',
+      uid: user,
+      postId: widget.snapshot['postId'],
+    );
+  }
+
   @override
   void dispose() {
     // TODO: implement dispose
@@ -62,12 +103,9 @@ class _ReelsItemState extends State<ReelsItem> {
       children: [
         GestureDetector(
           onDoubleTap: () {
-            FirebaseFirestor().like(
-              like: widget.snapshot['like'],
-              type: 'reels',
-              uid: user,
-              postId: widget.snapshot['postId'],
-            );
+            if (!isLiked) {
+              toggleLike();
+            }
             setState(() {
               isAnimating = true;
             });
@@ -125,32 +163,18 @@ class _ReelsItemState extends State<ReelsItem> {
           child: Column(
             children: [
               LikeAnimation(
-                isAnimation: widget.snapshot['like']?.contains(user),
+                isAnimation: isAnimating,
                 child: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      isAnimating = true;
-                    });
-                    FirebaseFirestor().like(
-                      like: widget.snapshot['like'],
-                      type: 'reels',
-                      uid: user,
-                      postId: widget.snapshot['postId'],
-                    );
-                  },
+                  onPressed: toggleLike,
                   icon: Icon(
-                    widget.snapshot['like']?.contains(user)
-                        ? Icons.favorite
-                        : Icons.favorite_border,
-                    color: widget.snapshot['like']?.contains(user)
-                        ? Colors.red
-                        : Colors.white,
+                    isLiked ? Icons.favorite : Icons.favorite_border,
+                    color: isLiked ? Colors.red : Colors.white,
                     size: 24,
                   ),
                 ),
               ),
               Text(
-                widget.snapshot['like'].length.toString(),
+                likeCount.toString(),
                 style: const TextStyle(fontSize: 12, color: Colors.white),
               ),
               const SizedBox(height: 10),
@@ -222,27 +246,42 @@ class _ReelsItemState extends State<ReelsItem> {
                     ),
                   ),
                   SizedBoxSpacer.w10,
-                  Text(
-                    widget.snapshot['username'],
-                    style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ProfileScreen(Uid: widget.snapshot['uid']),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      widget.snapshot['username'],
+                      style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold),
+                    ),
                   ),
                   const SizedBox(width: 10),
-                  Container(
-                    alignment: Alignment.center,
-                    width: 60,
-                    height: 25,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: const Text(
-                      'Follow',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.white,
+                  GestureDetector(
+                    onTap: toggleFollow,
+                    child: Container(
+                      alignment: Alignment.center,
+                      width: 80,
+                      height: 25,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(5),
+                        color: Colors.transparent,
+                      ),
+                      child: Text(
+                        isFollowing ? 'Following' : 'Follow',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),

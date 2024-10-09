@@ -28,7 +28,7 @@ class Authentication {
     required String bio,
     required File profile,
   }) async {
-    late String URL;
+    late String url;
     try {
       if (email.isNotEmpty &&
           password.isNotEmpty &&
@@ -42,10 +42,10 @@ class Authentication {
           // upload profile image on storage
 
           if (profile != File('')) {
-            URL =
+            url =
                 await StorageMethod().uploadImageToStorage('profile', profile);
           } else {
-            URL = '';
+            url = '';
           }
 
           // get information with firestor
@@ -54,9 +54,9 @@ class Authentication {
             email: email.trim(),
             username: username.trim(),
             bio: bio.trim(),
-            profile: URL == ''
+            profile: url == ''
                 ? 'https://firebasestorage.googleapis.com/v0/b/instagramclone-4ac6a.appspot.com/o/person.png?alt=media&token=b405fedc-0d39-428d-a117-a5857633d7e2'
-                : URL.trim(),
+                : url.trim(),
           );
         } else {
           throw exceptions('password and confirm password should be same');

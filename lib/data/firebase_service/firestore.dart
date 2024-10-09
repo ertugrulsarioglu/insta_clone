@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:uuid/uuid.dart';
+
 import '../../model/usermodel.dart';
 import '../../util/exeption.dart';
-import 'package:uuid/uuid.dart';
 
 class FirebaseFirestor {
   final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;

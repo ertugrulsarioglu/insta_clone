@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../widgets/sizedbox_spacer.dart';
 
 import '../data/firebase_service/firebase_auth.dart';
+import '../widgets/sizedbox_spacer.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback show;
@@ -16,10 +16,10 @@ class _LoginScreenState extends State<LoginScreen> {
   late FocusNode emailF = FocusNode();
   final passwordController = TextEditingController();
   late FocusNode passwordF = FocusNode();
+  bool _isPasswordVisible = false;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     emailF = FocusNode();
     emailF.addListener(() {
@@ -33,7 +33,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
     super.dispose();
     emailF.dispose();
     passwordF.dispose();
@@ -99,9 +98,19 @@ class _LoginScreenState extends State<LoginScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: InkWell(
           onTap: () async {
-            await Authentication().login(
-                email: emailController.text.trim(),
-                password: passwordController.text.trim());
+            try {
+              await Authentication().login(
+                  email: emailController.text.trim(),
+                  password: passwordController.text.trim());
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                      'Login failed. Please check your email and password.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           },
           child: Container(
             alignment: Alignment.center,
@@ -138,6 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // ignore: non_constant_identifier_names
   Widget _CustomTextField(TextEditingController controller, IconData icon,
       String type, FocusNode focusNode) {
+    bool isPassword = type.toLowerCase() == 'password';
     return Container(
       height: 44,
       decoration: BoxDecoration(
@@ -150,12 +160,28 @@ class _LoginScreenState extends State<LoginScreen> {
           style: const TextStyle(fontSize: 18, color: Colors.black),
           controller: controller,
           focusNode: focusNode,
+          obscureText: isPassword && !_isPasswordVisible,
           decoration: InputDecoration(
               hintText: type,
               prefixIcon: Icon(
                 icon,
                 color: focusNode.hasFocus ? Colors.black : Colors.grey,
               ),
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    )
+                  : null,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
               enabledBorder: OutlineInputBorder(
