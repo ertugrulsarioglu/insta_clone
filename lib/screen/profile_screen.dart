@@ -1,9 +1,8 @@
-// ignore_for_file: must_be_immutable, camel_case_types
+// ignore_for_file: must_be_immutable, camel_case_types, use_build_context_synchronously
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../data/firebase_service/firestore.dart';
 import '../model/usermodel.dart';
@@ -71,36 +70,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Shimmer(
-            gradient: const LinearGradient(colors: Colors.primaries),
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height,
-              width: MediaQuery.of(context).size.width,
-            ),
-          ),
-          backgroundColor: Colors.white,
-        ),
-        body: const ShimmerLoading(),
-      );
-    }
-
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-          backgroundColor: Colors.grey.shade100,
-          appBar: _customAppbar,
-          body: SafeArea(
-              child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: head(_user!),
-              ),
-              _profilePostsStreamBuilder
-            ],
-          ))),
+        backgroundColor: Colors.grey.shade100,
+        appBar: isLoading ? _customShimmerAppBar : _customAppbar,
+        body: SafeArea(
+          child: isLoading
+              ? _buildShimmerContent
+              : CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: head(_user!),
+                    ),
+                    _profilePostsStreamBuilder
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+
+  AppBar get _customShimmerAppBar {
+    return AppBar(
+      backgroundColor: Colors.white,
+      title: ShimmerLoading(
+        child: Container(
+          width: 200,
+          height: 20,
+          color: Colors.white,
+        ),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 15),
+          child: ShimmerLoading(
+            child: Container(
+              width: 24,
+              height: 24,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  AppBar get _customAppbar {
+    return AppBar(
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 15),
+          child: IconButton(
+            icon: const Icon(Icons.exit_to_app),
+            onPressed: _signOut,
+          ),
+        )
+      ],
+      backgroundColor: Colors.white,
+      title: Text(
+        _user!.username,
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
     );
   }
 
@@ -147,97 +178,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               mainAxisSpacing: 1,
             ));
       },
-    );
-  }
-
-  AppBar get _customAppbar {
-    return AppBar(
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 15),
-          child: IconButton(
-            icon: const Icon(Icons.exit_to_app),
-            onPressed: _signOut,
-          ),
-        )
-      ],
-      backgroundColor: Colors.white,
-      title: Text(
-        _user!.username,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget get _buildProfileScreen {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-          backgroundColor: Colors.grey.shade100,
-          appBar: AppBar(
-            actions: const [
-              Padding(
-                padding: EdgeInsets.only(right: 15),
-                child: Icon(Icons.exit_to_app),
-              )
-            ],
-            backgroundColor: Colors.white,
-            title: Text(
-              _user!.username,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          body: SafeArea(
-              child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: head(_user!),
-              ),
-              StreamBuilder(
-                stream: _firebaseFirestore
-                    .collection('posts')
-                    .orderBy('time', descending: true)
-                    .where('uid', isEqualTo: widget.Uid)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return SliverToBoxAdapter(
-                      child: SizedBox(
-                        height: MediaQuery.of(context).size.height / 6.5,
-                        width: MediaQuery.of(context).size.width,
-                        child: const Center(
-                          child: CircularProgressIndicator(color: Colors.black),
-                        ),
-                      ),
-                    );
-                  }
-
-                  postLenght = snapshot.data!.docs.length;
-
-                  return SliverGrid(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final snap = snapshot.data!.docs[index];
-                          return GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => PostScreen(snap.data()),
-                                ));
-                              },
-                              child: CachedImage(snap['postImage']));
-                        },
-                        childCount: postLenght,
-                      ),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 1,
-                        mainAxisSpacing: 1,
-                      ));
-                },
-              )
-            ],
-          ))),
     );
   }
 
@@ -461,6 +401,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget get _buildShimmerContent {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildShimmerProfileHeader,
+          _buildShimmerPosts,
+        ],
+      ),
+    );
+  }
+
+  Widget get _buildShimmerProfileHeader {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const ShimmerLoading(
+                width: 100,
+                height: 100,
+                shapeBorder: CircleBorder(),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(3, (index) => _buildShimmerStats()),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const ShimmerLoading(width: 150, height: 16),
+          const SizedBox(height: 8),
+          const ShimmerLoading(width: double.infinity, height: 16),
+          const SizedBox(height: 4),
+          const ShimmerLoading(width: 200, height: 16),
+          const SizedBox(height: 16),
+          const ShimmerLoading(height: 40),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(
+              3,
+              (index) => const ShimmerLoading(
+                width: 30,
+                height: 30,
+                shapeBorder: CircleBorder(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerStats() {
+    return const Column(
+      children: [
+        ShimmerLoading(width: 50, height: 20),
+        SizedBox(height: 4),
+        ShimmerLoading(width: 60, height: 16),
+      ],
+    );
+  }
+
+  Widget get _buildShimmerPosts {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 1,
+        mainAxisSpacing: 1,
+      ),
+      itemCount: 9, // Örnek olarak 9 post gösteriyoruz
+      itemBuilder: (context, index) {
+        return const ShimmerLoading();
+      },
     );
   }
 }

@@ -310,8 +310,5 @@ class SizedBoxSpacer {
   static SizedBox get h50 => const SizedBox(height: 50);
   static SizedBox get h60 => const SizedBox(height: 60);
   static SizedBox get h120 => const SizedBox(height: 120);
-  static SizedBox get h100w96 =>
-      const SizedBox(height: 100, width: 96); // Özel genişlikte
-
-  // İsteğe bağlı olarak daha fazla boyut ekleyebilirsin
+  static SizedBox get h100w96 => const SizedBox(height: 100, width: 96);
 }

@@ -167,6 +167,7 @@ class _PostWidgetState extends State<PostWidget> {
             child: Column(
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBoxSpacer.w2,
@@ -240,14 +241,7 @@ class _PostWidgetState extends State<PostWidget> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 15),
-                      child: Image.asset(
-                        'images/save.png',
-                        height: 28,
-                      ),
-                    ),
+                    const Spacer()
                   ],
                 ),
                 Padding(
