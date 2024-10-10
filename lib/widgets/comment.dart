@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../data/firebase_service/firestore.dart';
@@ -8,7 +9,14 @@ import 'shimmer.dart';
 class Comment extends StatefulWidget {
   final String type;
   final String postId;
-  const Comment({super.key, required this.type, required this.postId});
+  final Function(int) updateCommentCount;
+
+  const Comment({
+    super.key,
+    required this.type,
+    required this.postId,
+    required this.updateCommentCount,
+  });
 
   @override
   State<Comment> createState() => _CommentState();
@@ -17,9 +25,35 @@ class Comment extends StatefulWidget {
 class _CommentState extends State<Comment> {
   final TextEditingController _commentController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  List<QueryDocumentSnapshot> _comments = [];
+  bool _isAddingComment = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadComments();
+  }
+
+  void _loadComments() {
+    _firestore
+        .collection(widget.type)
+        .doc(widget.postId)
+        .collection('comments')
+        .orderBy('timestamp', descending: true)
+        .get()
+        .then((snapshot) {
+      setState(() {
+        _comments = snapshot.docs;
+      });
+      _updateCommentCount();
+    });
+  }
 
   void _addComment() {
     if (_commentController.text.isNotEmpty) {
+      setState(() {
+        _isAddingComment = true;
+      });
       FirebaseFirestor()
           .Comments(
         comment: _commentController.text,
@@ -27,12 +61,38 @@ class _CommentState extends State<Comment> {
         postId: widget.postId,
       )
           .then((_) {
-        setState(() {
-          _commentController.clear();
-        });
+        _commentController.clear();
         FocusScope.of(context).unfocus();
+        _loadComments();
+        setState(() {
+          _isAddingComment = false;
+        });
       });
     }
+  }
+
+  void _deleteComment(String commentId) {
+    setState(() {
+      _comments.removeWhere((comment) => comment.id == commentId);
+      _updateCommentCount();
+    });
+    FirebaseFirestore.instance
+        .collection(widget.type)
+        .doc(widget.postId)
+        .collection('comments')
+        .doc(commentId)
+        .delete()
+        .then((_) {})
+        .catchError((error) {
+      if (kDebugMode) {
+        print("An error occurred while deleting the comment: $error");
+      }
+    });
+  }
+
+  void _updateCommentCount() {
+    int newCount = _comments.length;
+    widget.updateCommentCount(newCount);
   }
 
   @override
@@ -56,41 +116,53 @@ class _CommentState extends State<Comment> {
                 color: Colors.black,
               ),
             ),
-            StreamBuilder<QuerySnapshot>(
-              stream: _firestore
-                  .collection(widget.type)
-                  .doc(widget.postId)
-                  .collection('comments')
-                  .orderBy('timestamp', descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: ShimmerLoading());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Hata: ${snapshot.error}'));
-                }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('No comment yet.'));
-                }
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 15,
+            _comments.isEmpty && !_isAddingComment
+                ? const Center(
+                    child: Text(
+                    'No comment yet.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                    ),
+                  ))
+                : Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    child: ListView.builder(
+                      itemCount: _comments.length + (_isAddingComment ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (_isAddingComment && index == 0) {
+                          return _buildShimmerCommentItem;
+                        }
+                        final commentIndex =
+                            _isAddingComment ? index - 1 : index;
+                        if (commentIndex >= _comments.length) {
+                          return const SizedBox.shrink();
+                        }
+                        final comment = _comments[commentIndex];
+                        final commentData =
+                            comment.data() as Map<String, dynamic>?;
+                        if (commentData == null) {
+                          return const SizedBox.shrink();
+                        }
+                        return Dismissible(
+                          key: Key(comment.id),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            color: Colors.red,
+                            child: const Padding(
+                              padding: EdgeInsets.only(right: 16),
+                              child: Icon(Icons.delete, color: Colors.white),
+                            ),
+                          ),
+                          onDismissed: (direction) {
+                            _deleteComment(comment.id);
+                          },
+                          child: commentItem(commentData),
+                        );
+                      },
+                    ),
                   ),
-                  child: ListView.builder(
-                    itemCount:
-                        snapshot.data == null ? 0 : snapshot.data!.docs.length,
-                    itemBuilder: (context, index) {
-                      if (!snapshot.hasData) {
-                        return const Center(child: ShimmerLoading());
-                      }
-                      return commentItem(snapshot.data!.docs[index].data()
-                          as Map<String, dynamic>);
-                    },
-                  ),
-                );
-              },
-            ),
             Positioned(
               left: 0,
               right: 0,
@@ -103,8 +175,8 @@ class _CommentState extends State<Comment> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     SizedBox(
-                      height: 45,
-                      width: 260,
+                      height: MediaQuery.of(context).size.height * 0.052,
+                      width: MediaQuery.of(context).size.width * 0.7,
                       child: TextField(
                         controller: _commentController,
                         maxLines: 4,
@@ -115,11 +187,53 @@ class _CommentState extends State<Comment> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: _addComment,
+                      onTap: () {
+                        _addComment();
+                        _commentController.clear();
+                      },
                       child: const Icon(Icons.send),
                     ),
                   ],
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget get _buildShimmerCommentItem {
+    return ShimmerLoading(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const ShimmerLoading(
+              width: 35,
+              height: 35,
+              shapeBorder: CircleBorder(),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ShimmerLoading(
+                    width: 100,
+                    height: 14,
+                    shapeBorder: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(2)),
+                  ),
+                  const SizedBox(height: 8),
+                  ShimmerLoading(
+                    width: double.infinity,
+                    height: 14,
+                    shapeBorder: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(2)),
+                  ),
+                ],
               ),
             ),
           ],

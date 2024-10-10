@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -29,6 +30,7 @@ class _ReelsItemState extends State<ReelsItem> {
   bool isFollowing = false;
   int likeCount = 0;
   bool isLiked = false;
+  int commentCount = 0;
 
   @override
   void initState() {
@@ -38,6 +40,7 @@ class _ReelsItemState extends State<ReelsItem> {
     checkFollowStatus();
     likeCount = widget.snapshot['like'].length;
     isLiked = widget.snapshot['like']?.contains(user) ?? false;
+    commentCount = widget.snapshot['commentCount'] ?? 0;
   }
 
   Future<void> checkFollowStatus() async {
@@ -69,7 +72,7 @@ class _ReelsItemState extends State<ReelsItem> {
         isInitialized = true;
       });
     } catch (error) {
-      print('Video yüklenirken hata oluştu: $error');
+      print('An error occurred while loading the video: $error');
     }
   }
 
@@ -88,9 +91,19 @@ class _ReelsItemState extends State<ReelsItem> {
     );
   }
 
+  void updateCommentCount(int newCount) {
+    setState(() {
+      commentCount = newCount;
+    });
+
+    FirebaseFirestore.instance
+        .collection('reels')
+        .doc(widget.snapshot['postId'])
+        .update({'commentCount': newCount});
+  }
+
   @override
   void dispose() {
-    // TODO: implement dispose
     controller.setLooping(false);
     controller.dispose();
     super.dispose();
@@ -197,6 +210,7 @@ class _ReelsItemState extends State<ReelsItem> {
                             return Comment(
                               type: 'reels',
                               postId: widget.snapshot['postId'],
+                              updateCommentCount: updateCommentCount,
                             );
                           },
                         ),
@@ -211,9 +225,7 @@ class _ReelsItemState extends State<ReelsItem> {
                 ),
               ),
               Text(
-                widget.snapshot['commentCount'] == null
-                    ? '0'
-                    : widget.snapshot['commentCount'].toString(),
+                commentCount.toString(),
                 style: const TextStyle(fontSize: 12, color: Colors.white),
               ),
               const SizedBox(height: 10),
@@ -265,26 +277,27 @@ class _ReelsItemState extends State<ReelsItem> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: toggleFollow,
-                    child: Container(
-                      alignment: Alignment.center,
-                      width: 80,
-                      height: 25,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(5),
-                        color: Colors.transparent,
-                      ),
-                      child: Text(
-                        isFollowing ? 'Following' : 'Follow',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.white,
+                  if (user != widget.snapshot['uid'])
+                    GestureDetector(
+                      onTap: toggleFollow,
+                      child: Container(
+                        alignment: Alignment.center,
+                        width: 80,
+                        height: 25,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade400),
+                          borderRadius: BorderRadius.circular(5),
+                          color: Colors.transparent,
+                        ),
+                        child: Text(
+                          isFollowing ? 'Following' : 'Follow',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
               SizedBoxSpacer.h8,

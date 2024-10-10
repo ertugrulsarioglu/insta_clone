@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:date_format/date_format.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +28,7 @@ class _PostWidgetState extends State<PostWidget> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   int likeCount = 0;
   bool isLiked = false;
+  int commentCount = 0;
 
   @override
   void initState() {
@@ -34,6 +36,7 @@ class _PostWidgetState extends State<PostWidget> {
     user = _auth.currentUser!.uid;
     likeCount = widget.snapshot['like'].length;
     isLiked = widget.snapshot['like']?.contains(user) ?? false;
+    commentCount = widget.snapshot['commentCount'] ?? 0;
   }
 
   void toggleLike() {
@@ -55,6 +58,17 @@ class _PostWidgetState extends State<PostWidget> {
         widget.onLikeUpdated!();
       }
     });
+  }
+
+  void updateCommentCount(int newCount) {
+    setState(() {
+      commentCount = newCount;
+    });
+
+    FirebaseFirestore.instance
+        .collection('posts')
+        .doc(widget.snapshot['postId'])
+        .update({'commentCount': newCount});
   }
 
   @override
@@ -212,6 +226,7 @@ class _PostWidgetState extends State<PostWidget> {
                                   return Comment(
                                     type: 'posts',
                                     postId: widget.snapshot['postId'],
+                                    updateCommentCount: updateCommentCount,
                                   );
                                 },
                               ),
@@ -223,9 +238,7 @@ class _PostWidgetState extends State<PostWidget> {
                     ),
                     SizedBoxSpacer.w2,
                     Text(
-                      widget.snapshot['commentCount'] == null
-                          ? '0'
-                          : widget.snapshot['commentCount'].toString(),
+                      commentCount.toString(),
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
