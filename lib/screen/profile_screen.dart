@@ -1,8 +1,10 @@
-// ignore_for_file: must_be_immutable, camel_case_types, use_build_context_synchronously
+// ignore_for_file: must_be_immutable, use_build_context_synchronously, invalid_use_of_protected_member, camel_case_types
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 import '../data/firebase_service/firestore.dart';
 import '../model/usermodel.dart';
@@ -12,6 +14,7 @@ import '../widgets/sizedbox_spacer.dart';
 import 'post_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
+  // ignore: non_constant_identifier_names
   String Uid;
   ProfileScreen({super.key, required this.Uid});
 
@@ -22,18 +25,32 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  late int postLenght = 0;
+  late int postLength = 0;
+
   Usermodel? _user;
   bool yours = false;
   List followings = [];
   bool isfollow = false;
   int followerCount = 0;
   bool isLoading = true;
+  bool _isEditing = false;
+  late TextEditingController _bioController;
+  late TextEditingController _usernameController;
+  File? _newProfileImage;
 
   @override
   void initState() {
     super.initState();
     _loadInitialData();
+    _bioController = TextEditingController();
+    _usernameController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _bioController.dispose();
+    _usernameController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInitialData() async {
@@ -71,19 +88,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
         backgroundColor: Colors.grey.shade100,
         appBar: isLoading ? _customShimmerAppBar : _customAppbar,
         body: SafeArea(
           child: isLoading
               ? _buildShimmerContent
-              : CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: head(_user!),
+              : Column(
+                  children: [
+                    head(_user!),
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          _buildPostsGrid(),
+                          _buildReelsGrid(),
+                        ],
+                      ),
                     ),
-                    _profilePostsStreamBuilder
                   ],
                 ),
         ),
@@ -121,10 +143,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 15),
-          child: IconButton(
-            icon: const Icon(Icons.exit_to_app),
-            onPressed: _signOut,
-          ),
+          child: _isEditing
+              ? Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: _cancelEditing,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.check),
+                      onPressed: _saveProfileChanges,
+                    ),
+                  ],
+                )
+              : IconButton(
+                  icon: const Icon(Icons.exit_to_app),
+                  onPressed: _signOut,
+                ),
         )
       ],
       backgroundColor: Colors.white,
@@ -135,50 +170,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  StreamBuilder<QuerySnapshot<Map<String, dynamic>>>
-      get _profilePostsStreamBuilder {
-    return StreamBuilder(
-      stream: _firebaseFirestore
-          .collection('posts')
-          .orderBy('time', descending: true)
-          .where('uid', isEqualTo: widget.Uid)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return SliverToBoxAdapter(
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height / 6.5,
-              width: MediaQuery.of(context).size.width,
-              child: const Center(
-                child: CircularProgressIndicator(color: Colors.black),
-              ),
-            ),
-          );
-        }
+  Future<void> _saveProfileChanges() async {
+    setState(() {
+      isLoading = true;
+    });
 
-        postLenght = snapshot.data!.docs.length;
+    String? newProfileImageUrl;
+    if (_newProfileImage != null) {
+      try {
+        newProfileImageUrl = await FirebaseFirestor()
+            .uploadProfileImage(widget.Uid, _newProfileImage!);
+      } catch (e) {
+        print('Error occurred while uploading profile picture: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  'An error occurred while uploading the profile picture.')),
+        );
+      }
+    }
 
-        return SliverGrid(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final snap = snapshot.data!.docs[index];
-                return GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) => PostScreen(snap.data()),
-                      ));
-                    },
-                    child: CachedImage(snap['postImage']));
-              },
-              childCount: postLenght,
-            ),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 1,
-              mainAxisSpacing: 1,
-            ));
-      },
-    );
+    try {
+      bool success = await FirebaseFirestor().updateUserProfile(
+        uid: widget.Uid,
+        bio: _bioController.text,
+        username: _usernameController.text,
+        profileImageUrl: newProfileImageUrl,
+      );
+
+      if (success) {
+        final updatedUser = await FirebaseFirestor().getUser(uidd: widget.Uid);
+
+        setState(() {
+          _user = updatedUser;
+          _isEditing = false;
+          _newProfileImage = null;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated successfully.')),
+        );
+      } else {
+        throw Exception('Profile could not be updated.');
+      }
+    } catch (e) {
+      print('Error occurred while updating profile: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('An error occurred while updating the profile.')),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _cancelEditing() {
+    setState(() {
+      _isEditing = false;
+      _newProfileImage = null;
+      _bioController.text = _user!.bio;
+      _usernameController.text = _user!.username;
+    });
   }
 
   Widget head(Usermodel user) => Container(
@@ -193,7 +247,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: _userNameAndBioColumn(user),
             ),
             SizedBoxSpacer.h20,
-            _yoursStateTrueProfileCenterBarVisibility(yours: yours),
+            if (!_isEditing)
+              _yoursStateTrueProfileCenterBarVisibility(yours: yours),
             _yoursStateFalseProfileCenterBarVisibility,
             __yoursStateFalseIsfollowStateTrueProfileCenterBarVisibility,
             SizedBoxSpacer.h10,
@@ -216,7 +271,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         tabs: [
           Icon(Icons.grid_on),
           Icon(Icons.video_collection),
-          Icon(Icons.person),
         ],
       ),
     );
@@ -227,11 +281,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 18),
-          child: ClipOval(
-            child: SizedBox(
-              width: 100,
-              height: 100,
-              child: CachedImage(user.profile),
+          child: GestureDetector(
+            onTap: _isEditing ? _changeProfilePicture : null,
+            child: Stack(
+              children: [
+                ClipOval(
+                  child: SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: _newProfileImage != null
+                        ? Image.file(_newProfileImage!, fit: BoxFit.cover)
+                        : CachedImage(user.profile),
+                  ),
+                ),
+                if (_isEditing)
+                  const Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: CircleAvatar(
+                      backgroundColor: Colors.grey,
+                      radius: 15,
+                      child: Icon(Icons.edit, size: 15, color: Colors.white),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -307,17 +380,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          user.username,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-        ),
+        _isEditing
+            ? TextField(
+                controller: _usernameController,
+                decoration: const InputDecoration(
+                  labelText: 'Username',
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 2, horizontal: 0),
+                  border: InputBorder.none,
+                ),
+                cursorColor: Colors.black54,
+                keyboardType: TextInputType.name,
+              )
+            : Text(
+                user.username,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
         const SizedBox(height: 5),
-        Text(
-          user.bio,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w300),
-        ),
+        _isEditing
+            ? TextFormField(
+                style: const TextStyle(color: Colors.black),
+                controller: _bioController,
+                decoration: const InputDecoration(
+                  labelText: 'Bio',
+                  alignLabelWithHint: true,
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 2, horizontal: 0),
+                  border: InputBorder.none,
+                ),
+                cursorColor: Colors.black54,
+                maxLines: null,
+                keyboardType: TextInputType.text,
+              )
+            : Text(
+                user.bio,
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w300),
+              ),
       ],
     );
+  }
+
+  Future<void> _changeProfilePicture() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        _newProfileImage = File(image.path);
+      });
+    }
   }
 
   Widget get __yoursStateFalseIsfollowStateTrueProfileCenterBarVisibility {
@@ -451,7 +564,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: List.generate(
-              3,
+              2,
               (index) => const ShimmerLoading(
                 width: 30,
                 height: 30,
@@ -483,9 +596,101 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisSpacing: 1,
         mainAxisSpacing: 1,
       ),
-      itemCount: 9, // Örnek olarak 9 post gösteriyoruz
+      itemCount: 9, // We're showing 9 posts as an example
       itemBuilder: (context, index) {
         return const ShimmerLoading();
+      },
+    );
+  }
+
+  Widget _buildPostsGrid() {
+    return StreamBuilder(
+      stream: _firebaseFirestore
+          .collection('posts')
+          .orderBy('time', descending: true)
+          .where('uid', isEqualTo: widget.Uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No posts found'));
+        }
+
+        final posts = snapshot.data!.docs;
+        postLength = posts.length;
+
+        return GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 1,
+            mainAxisSpacing: 1,
+          ),
+          itemCount: postLength,
+          itemBuilder: (context, index) {
+            final snap = posts[index];
+            return GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => PostScreen(snap.data()),
+                ));
+              },
+              child: CachedImage(snap['postImage']),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildReelsGrid() {
+    return StreamBuilder(
+      stream: _firebaseFirestore
+          .collection('reels')
+          .orderBy('time', descending: true)
+          .where('uid', isEqualTo: widget.Uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No reels found'));
+        }
+
+        final reels = snapshot.data!.docs;
+
+        return GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 1,
+            mainAxisSpacing: 1,
+            childAspectRatio: 2 / 3,
+          ),
+          itemCount: reels.length,
+          itemBuilder: (context, index) {
+            final reel = reels[index].data();
+            return GestureDetector(
+              onTap: () {},
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  reel['thumbnailUrl'] != null
+                      ? CachedImage(reel['thumbnailUrl'])
+                      : Container(
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.video_library,
+                              color: Colors.grey),
+                        ),
+                  const Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: Icon(
+                      Icons.play_arrow,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
       },
     );
   }
@@ -503,7 +708,16 @@ class _yoursStateTrueProfileCenterBarVisibility extends StatelessWidget {
     return Visibility(
       visible: yours,
       child: GestureDetector(
-        onTap: () {},
+        onTap: () {
+          final state = context.findAncestorStateOfType<_ProfileScreenState>();
+          if (state != null) {
+            state.setState(() {
+              state._isEditing = true;
+              state._bioController.text = state._user!.bio;
+              state._usernameController.text = state._user!.username;
+            });
+          }
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15),
           child: Container(

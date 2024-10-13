@@ -21,16 +21,18 @@ class _ReelsScreenState extends State<ReelsScreen> {
           .orderBy('time', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(
+              child: CircularProgressIndicator(
+            color: Colors.black,
+          ));
+        } else if (snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No reels found'));
+        }
         return PageView.builder(
           scrollDirection: Axis.vertical,
           controller: PageController(initialPage: 0, viewportFraction: 1),
           itemBuilder: (context, index) {
-            if (!snapshot.hasData) {
-              return const Center(
-                  child: CircularProgressIndicator(
-                color: Colors.black,
-              ));
-            }
             return ReelsItem(snapshot.data!.docs[index].data());
           },
           itemCount: snapshot.data == null ? 0 : snapshot.data!.docs.length,

@@ -14,9 +14,23 @@ class PostWidget extends StatefulWidget {
   final dynamic snapshot;
   final bool hasAppBar;
   final VoidCallback? onLikeUpdated;
+  final VoidCallback? onEditPressed;
+  final bool isEditing;
+  final TextEditingController? captionController;
+  final TextEditingController? locationController;
+  final bool showEditOption;
 
-  const PostWidget(this.snapshot, this.hasAppBar,
-      {this.onLikeUpdated, super.key});
+  const PostWidget(
+    this.snapshot,
+    this.hasAppBar, {
+    this.onLikeUpdated,
+    this.onEditPressed,
+    this.isEditing = false,
+    this.captionController,
+    this.locationController,
+    this.showEditOption = false,
+    super.key,
+  });
 
   @override
   State<PostWidget> createState() => _PostWidgetState();
@@ -71,8 +85,41 @@ class _PostWidgetState extends State<PostWidget> {
         .update({'commentCount': newCount});
   }
 
+  void _deletePost() {
+    if (widget.snapshot['uid'] != user) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('You do not have permission to delete this post')),
+      );
+      return;
+    }
+
+    FirebaseFirestore.instance
+        .collection('posts')
+        .doc(widget.snapshot['postId'])
+        .delete()
+        .then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Post deleted')),
+      );
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error occurred: $error')),
+      );
+    });
+  }
+
+  void _reportPost() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Post reported')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    bool hasLocation = widget.snapshot['location'] != null &&
+        widget.snapshot['location'].isNotEmpty;
+
     return Padding(
       padding: EdgeInsets.only(top: widget.hasAppBar ? 0.0 : 10),
       child: Column(
@@ -95,31 +142,51 @@ class _PostWidgetState extends State<PostWidget> {
                   Expanded(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: widget.snapshot['location'] != null &&
-                              widget.snapshot['location'].isNotEmpty
+                      mainAxisAlignment: hasLocation || widget.isEditing
                           ? MainAxisAlignment.spaceEvenly
                           : MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        GestureDetector(
-                          onTap: () {
-                            FocusScope.of(context).unfocus();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ProfileScreen(Uid: widget.snapshot['uid']),
+                        widget.isEditing
+                            ? Text(
+                                widget.snapshot['username'],
+                                style: const TextStyle(
+                                    fontSize: 13, fontWeight: FontWeight.bold),
+                              )
+                            : GestureDetector(
+                                onTap: () {
+                                  FocusScope.of(context).unfocus();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ProfileScreen(
+                                          Uid: widget.snapshot['uid']),
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  widget.snapshot['username'],
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold),
+                                ),
                               ),
-                            );
-                          },
-                          child: Text(
-                            widget.snapshot['username'],
-                            style: const TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        if (widget.snapshot['location'] != null &&
-                            widget.snapshot['location'].isNotEmpty)
+                        if (widget.isEditing)
+                          SizedBox(
+                            height: 20,
+                            child: TextField(
+                              controller: widget.locationController,
+                              decoration: const InputDecoration(
+                                hintText: 'Add location',
+                                hintStyle: TextStyle(fontSize: 11),
+                                isDense: true,
+                                contentPadding:
+                                    EdgeInsets.symmetric(vertical: 4),
+                              ),
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                          )
+                        else if (hasLocation)
                           Text(
                             widget.snapshot['location'],
                             style: const TextStyle(fontSize: 11),
@@ -127,7 +194,54 @@ class _PostWidgetState extends State<PostWidget> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.more_horiz),
+                  GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (BuildContext context) {
+                          bool isCurrentUserOwner =
+                              widget.snapshot['uid'] == user;
+                          return SafeArea(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                if (isCurrentUserOwner &&
+                                    widget.showEditOption) ...[
+                                  ListTile(
+                                    leading: const Icon(Icons.edit),
+                                    title: const Text('Edit'),
+                                    onTap: () {
+                                      widget.onEditPressed?.call();
+                                      Navigator.pop(context);
+                                    },
+                                  ),
+                                ],
+                                if (isCurrentUserOwner) ...[
+                                  ListTile(
+                                    leading: const Icon(Icons.delete),
+                                    title: const Text('Delete'),
+                                    onTap: () {
+                                      _deletePost();
+                                      Navigator.pop(context);
+                                    },
+                                  ),
+                                ],
+                                ListTile(
+                                  leading: const Icon(Icons.flag),
+                                  title: const Text('Report post'),
+                                  onTap: () {
+                                    _reportPost();
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    child: const Icon(Icons.more_horiz),
+                  ),
                 ],
               ),
             ),
@@ -267,11 +381,19 @@ class _PostWidgetState extends State<PostWidget> {
                         style: const TextStyle(
                             fontSize: 13, fontWeight: FontWeight.bold),
                       ),
-                      Text(
-                        widget.snapshot['caption'],
-                        style: const TextStyle(
-                          fontSize: 13,
-                        ),
+                      Expanded(
+                        child: widget.isEditing
+                            ? TextField(
+                                controller: widget.captionController,
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                ),
+                                style: const TextStyle(fontSize: 13),
+                              )
+                            : Text(
+                                widget.snapshot['caption'],
+                                style: const TextStyle(fontSize: 13),
+                              ),
                       ),
                     ],
                   ),
@@ -298,3 +420,5 @@ class _PostWidgetState extends State<PostWidget> {
     );
   }
 }
+
+//duzenleme mevzularina bir daha bak. bunun haricinde profilden reels ekranini ayarla

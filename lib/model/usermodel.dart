@@ -5,7 +5,7 @@ class Usermodel {
   String profile;
   List following;
   List followers;
-  List posts; // Yeni eklenen alan
+  List posts;
 
   Usermodel(this.bio, this.email, this.followers, this.following, this.profile,
       this.username,
