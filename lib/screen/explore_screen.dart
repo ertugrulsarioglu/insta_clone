@@ -7,7 +7,7 @@ import 'profile_screen/profile_screen.dart';
 import '../util/image_cached.dart';
 import '../widgets/shimmer.dart';
 import '../widgets/sizedbox_spacer.dart';
-import 'post_screen.dart';
+import 'post_screen/post_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});

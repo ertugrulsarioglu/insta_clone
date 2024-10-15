@@ -11,7 +11,7 @@ import '../../model/usermodel.dart';
 import '../../util/image_cached.dart';
 import '../../widgets/shimmer.dart';
 import '../../widgets/sizedbox_spacer.dart';
-import '../post_screen.dart';
+import '../post_screen/post_screen.dart';
 import 'profile_edit_widget.dart';
 import '../reels_screen.dart';
 

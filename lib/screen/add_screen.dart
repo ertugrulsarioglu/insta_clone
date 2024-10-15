@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'add_post_screen.dart';
+import 'post_screen/add_post_screen.dart';
 import 'add_reels_screen.dart';
 
 class AddScreen extends StatefulWidget {

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import '../widgets/post_widget.dart';
+import '../../widgets/post_widget.dart';
 
 class PostScreen extends StatefulWidget {
   final dynamic snapshot;
