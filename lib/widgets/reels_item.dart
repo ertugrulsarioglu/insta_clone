@@ -5,7 +5,7 @@ import 'package:video_player/video_player.dart';
 
 import '../data/firebase_service/firestore.dart';
 import '../model/usermodel.dart';
-import '../screen/profile_screen.dart';
+import '../screen/profile_screen/profile_screen.dart';
 import '../util/image_cached.dart';
 import 'comment.dart';
 import 'like_animation.dart';
@@ -14,7 +14,19 @@ import 'sizedbox_spacer.dart';
 
 class ReelsItem extends StatefulWidget {
   final snapshot;
-  const ReelsItem(this.snapshot, {super.key});
+  final VoidCallback? onEditPressed;
+  final bool isEditing;
+  final TextEditingController? captionController;
+  final bool showEditOption;
+
+  const ReelsItem(
+    this.snapshot, {
+    this.onEditPressed,
+    this.isEditing = false,
+    this.captionController,
+    this.showEditOption = false,
+    super.key,
+  });
 
   @override
   State<ReelsItem> createState() => _ReelsItemState();
@@ -100,6 +112,35 @@ class _ReelsItemState extends State<ReelsItem> {
         .collection('reels')
         .doc(widget.snapshot['postId'])
         .update({'commentCount': newCount});
+  }
+
+  void _deleteReels() {
+    if (widget.snapshot['uid'] != user) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Bu reels'i silme yetkiniz yok")),
+      );
+      return;
+    }
+
+    FirebaseFirestore.instance
+        .collection('reels')
+        .doc(widget.snapshot['postId'])
+        .delete()
+        .then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reels silindi')),
+      );
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Hata oluştu: $error')),
+      );
+    });
+  }
+
+  void _reportReels() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Reels bildirildi')),
+    );
   }
 
   @override
@@ -238,6 +279,58 @@ class _ReelsItemState extends State<ReelsItem> {
                 '0',
                 style: TextStyle(fontSize: 12, color: Colors.white),
               ),
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (BuildContext context) {
+                      bool isCurrentUserOwner = widget.snapshot['uid'] == user;
+                      return SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            if (isCurrentUserOwner &&
+                                widget.showEditOption) ...[
+                              ListTile(
+                                leading: const Icon(Icons.edit),
+                                title: const Text('Düzenle'),
+                                onTap: () {
+                                  widget.onEditPressed?.call();
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ],
+                            if (isCurrentUserOwner) ...[
+                              ListTile(
+                                leading: const Icon(Icons.delete),
+                                title: const Text('Sil'),
+                                onTap: () {
+                                  _deleteReels();
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ],
+                            ListTile(
+                              leading: const Icon(Icons.flag),
+                              title: const Text('Reels\'i bildir'),
+                              onTap: () {
+                                _reportReels();
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                child: const Icon(
+                  Icons.more_vert,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
             ],
           ),
         ),
@@ -301,13 +394,23 @@ class _ReelsItemState extends State<ReelsItem> {
                 ],
               ),
               SizedBoxSpacer.h8,
-              Text(
-                widget.snapshot['caption'],
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.white,
-                ),
-              ),
+              widget.isEditing
+                  ? TextField(
+                      controller: widget.captionController,
+                      style: const TextStyle(fontSize: 13, color: Colors.white),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'Açıklama ekle...',
+                        hintStyle: TextStyle(color: Colors.white70),
+                      ),
+                    )
+                  : Text(
+                      widget.snapshot['caption'],
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
             ],
           ),
         ),

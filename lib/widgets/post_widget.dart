@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../data/firebase_service/firestore.dart';
-import '../screen/profile_screen.dart';
+import '../screen/profile_screen/profile_screen.dart';
 import '../util/image_cached.dart';
 import 'comment.dart';
 import 'like_animation.dart';

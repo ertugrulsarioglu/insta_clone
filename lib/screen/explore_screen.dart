@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'profile_screen.dart';
+import 'profile_screen/profile_screen.dart';
 
 import '../util/image_cached.dart';
 import '../widgets/shimmer.dart';

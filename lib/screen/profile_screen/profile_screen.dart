@@ -6,12 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
-import '../data/firebase_service/firestore.dart';
-import '../model/usermodel.dart';
-import '../util/image_cached.dart';
-import '../widgets/shimmer.dart';
-import '../widgets/sizedbox_spacer.dart';
-import 'post_screen.dart';
+import '../../data/firebase_service/firestore.dart';
+import '../../model/usermodel.dart';
+import '../../util/image_cached.dart';
+import '../../widgets/shimmer.dart';
+import '../../widgets/sizedbox_spacer.dart';
+import '../post_screen.dart';
+import 'profile_edit_widget.dart';
+import '../reels_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   // ignore: non_constant_identifier_names
@@ -19,37 +21,38 @@ class ProfileScreen extends StatefulWidget {
   ProfileScreen({super.key, required this.Uid});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() => ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class ProfileScreenState extends State<ProfileScreen> {
   final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   late int postLength = 0;
 
-  Usermodel? _user;
+  Usermodel? userr;
   bool yours = false;
   List followings = [];
   bool isfollow = false;
   int followerCount = 0;
   bool isLoading = true;
-  bool _isEditing = false;
-  late TextEditingController _bioController;
-  late TextEditingController _usernameController;
+  bool isEditing = false;
+  late TextEditingController bioController;
+  late TextEditingController usernameController;
   File? _newProfileImage;
 
   @override
   void initState() {
     super.initState();
     _loadInitialData();
-    _bioController = TextEditingController();
-    _usernameController = TextEditingController();
+    bioController = TextEditingController();
+    usernameController = TextEditingController();
   }
 
   @override
   void dispose() {
-    _bioController.dispose();
-    _usernameController.dispose();
+    bioController.dispose();
+    usernameController.dispose();
+
     super.dispose();
   }
 
@@ -61,7 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         .get();
 
     setState(() {
-      _user = user;
+      userr = user;
       followerCount = user?.followers.length ?? 0;
       yours = _auth.currentUser!.uid == widget.Uid;
       isfollow = (currentUserSnap.data() as dynamic)['following']
@@ -97,7 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ? _buildShimmerContent
               : Column(
                   children: [
-                    head(_user!),
+                    head(userr!),
                     Expanded(
                       child: TabBarView(
                         children: [
@@ -143,7 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 15),
-          child: _isEditing
+          child: isEditing
               ? Row(
                   children: [
                     IconButton(
@@ -164,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
       backgroundColor: Colors.white,
       title: Text(
-        _user!.username,
+        userr!.username,
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
     );
@@ -193,8 +196,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       bool success = await FirebaseFirestor().updateUserProfile(
         uid: widget.Uid,
-        bio: _bioController.text,
-        username: _usernameController.text,
+        bio: bioController.text,
+        username: usernameController.text,
         profileImageUrl: newProfileImageUrl,
       );
 
@@ -202,8 +205,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final updatedUser = await FirebaseFirestor().getUser(uidd: widget.Uid);
 
         setState(() {
-          _user = updatedUser;
-          _isEditing = false;
+          userr = updatedUser;
+          isEditing = false;
           _newProfileImage = null;
         });
 
@@ -228,10 +231,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _cancelEditing() {
     setState(() {
-      _isEditing = false;
+      isEditing = false;
       _newProfileImage = null;
-      _bioController.text = _user!.bio;
-      _usernameController.text = _user!.username;
+      bioController.text = userr!.bio;
+      usernameController.text = userr!.username;
     });
   }
 
@@ -247,8 +250,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: _userNameAndBioColumn(user),
             ),
             SizedBoxSpacer.h20,
-            if (!_isEditing)
-              _yoursStateTrueProfileCenterBarVisibility(yours: yours),
+            if (!isEditing)
+              yoursStateTrueProfileCenterBarVisibility(yours: yours),
             _yoursStateFalseProfileCenterBarVisibility,
             __yoursStateFalseIsfollowStateTrueProfileCenterBarVisibility,
             SizedBoxSpacer.h10,
@@ -282,7 +285,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 18),
           child: GestureDetector(
-            onTap: _isEditing ? _changeProfilePicture : null,
+            onTap: isEditing ? _changeProfilePicture : null,
             child: Stack(
               children: [
                 ClipOval(
@@ -294,7 +297,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : CachedImage(user.profile),
                   ),
                 ),
-                if (_isEditing)
+                if (isEditing)
                   const Positioned(
                     bottom: 0,
                     right: 0,
@@ -380,9 +383,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _isEditing
+        isEditing
             ? TextField(
-                controller: _usernameController,
+                controller: usernameController,
                 decoration: const InputDecoration(
                   labelText: 'Username',
                   contentPadding:
@@ -398,10 +401,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
         const SizedBox(height: 5),
-        _isEditing
+        isEditing
             ? TextFormField(
                 style: const TextStyle(color: Colors.black),
-                controller: _bioController,
+                controller: bioController,
                 decoration: const InputDecoration(
                   labelText: 'Bio',
                   alignLabelWithHint: true,
@@ -666,7 +669,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           itemBuilder: (context, index) {
             final reel = reels[index].data();
             return GestureDetector(
-              onTap: () {},
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const ReelsScreen(),
+                ));
+              },
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -692,55 +699,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           },
         );
       },
-    );
-  }
-}
-
-class _yoursStateTrueProfileCenterBarVisibility extends StatelessWidget {
-  const _yoursStateTrueProfileCenterBarVisibility({
-    required this.yours,
-  });
-
-  final bool yours;
-
-  @override
-  Widget build(BuildContext context) {
-    return Visibility(
-      visible: yours,
-      child: GestureDetector(
-        onTap: () {
-          final state = context.findAncestorStateOfType<_ProfileScreenState>();
-          if (state != null) {
-            state.setState(() {
-              state._isEditing = true;
-              state._bioController.text = state._user!.bio;
-              state._usernameController.text = state._user!.username;
-            });
-          }
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: Container(
-            alignment: Alignment.center,
-            height: 30,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(5),
-              border: Border.all(
-                color: Colors.grey.shade400,
-              ),
-            ),
-            child: const Text(
-              'Edit Your Profile',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
