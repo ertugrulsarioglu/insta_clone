@@ -52,26 +52,27 @@ class _NavigationScreenState extends State<NavigationScreen> {
         unselectedItemColor: Colors.grey,
         currentIndex: _currentIndex,
         onTap: navigationTapped,
-        items: [
-          const BottomNavigationBarItem(
+        items: const [
+          BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: '',
           ),
-          const BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Icon(Icons.search),
             label: '',
           ),
-          const BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Icon(Icons.camera),
             label: '',
           ),
           BottomNavigationBarItem(
-              icon: Image.asset(
-                'images/instagram-reels-icon.png',
-                height: 20,
-              ),
+              icon: Icon(Icons.video_camera_back_outlined),
+              // Image.asset(
+              //   'images/instagram-reels-icon.png',
+              //   height: 20,
+              // ),
               label: ''),
-          const BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: '',
           ),
@@ -84,7 +85,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
           const HomeScreen(),
           const ExploreScreen(),
           const AddScreen(),
-          const ReelsScreen(),
+          const ReelsScreen(isFromProfile: false),
           ProfileScreen(
             Uid: _auth.currentUser!.uid,
           ),

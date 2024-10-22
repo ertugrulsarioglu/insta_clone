@@ -420,5 +420,3 @@ class _PostWidgetState extends State<PostWidget> {
     );
   }
 }
-
-//duzenleme mevzularina bir daha bak. bunun haricinde profilden reels ekranini ayarla

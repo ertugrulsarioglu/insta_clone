@@ -1,11 +1,14 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../widgets/reels_item.dart';
-import '../widgets/shimmer.dart'; // ShimmerLoading widget'ını import edin
+import '../widgets/shimmer.dart';
 
 class ReelsScreen extends StatefulWidget {
-  const ReelsScreen({super.key});
+  final bool isFromProfile;
+
+  const ReelsScreen({this.isFromProfile = false, super.key});
 
   @override
   State<ReelsScreen> createState() => _ReelsScreenState();
@@ -13,10 +16,11 @@ class ReelsScreen extends StatefulWidget {
 
 class _ReelsScreenState extends State<ReelsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   late PageController _pageController;
   int _currentPage = 0;
   bool _isEditing = false;
-  bool _isLoading = false;
+  final bool _isLoading = false;
   late TextEditingController _captionController;
 
   @override
@@ -37,34 +41,26 @@ class _ReelsScreenState extends State<ReelsScreen> {
       'caption': _captionController.text,
     }).then((_) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reels güncellendi')),
+        const SnackBar(content: Text('Reels updated')),
       );
       _toggleEditing();
     }).catchError((error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hata oluştu: $error')),
+        SnackBar(content: Text('Error occurred: $error')),
       );
-    });
-  }
-
-  void _onReelsDeleted() {
-    setState(() {
-      _isLoading = true;
-    });
-    // Kısa bir gecikme ekleyerek, kullanıcıya yükleme göstergesini gösterme fırsatı veriyoruz
-    Future.delayed(const Duration(milliseconds: 500), () {
-      setState(() {
-        _isLoading = false;
-      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    String currentUserId = _auth.currentUser!.uid;
+
     return Scaffold(
       body: StreamBuilder(
         stream: _firestore
             .collection('reels')
+            .where('uid',
+                isEqualTo: widget.isFromProfile ? currentUserId : null)
             .orderBy('time', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
@@ -73,7 +69,7 @@ class _ReelsScreenState extends State<ReelsScreen> {
               child: ShimmerLoading(),
             );
           } else if (snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('Reels bulunamadı'));
+            return const Center(child: Text('No reels found'));
           }
           return Stack(
             children: [
@@ -95,6 +91,11 @@ class _ReelsScreenState extends State<ReelsScreen> {
                     isEditing: _isEditing,
                     captionController: _captionController,
                     showEditOption: true,
+                    onDeleted: () {
+                      _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut);
+                    },
                   );
                 },
                 itemCount: snapshot.data!.docs.length,

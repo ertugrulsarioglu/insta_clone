@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -13,8 +15,10 @@ import 'shimmer.dart';
 import 'sizedbox_spacer.dart';
 
 class ReelsItem extends StatefulWidget {
+  // ignore: prefer_typing_uninitialized_variables
   final snapshot;
   final VoidCallback? onEditPressed;
+  final VoidCallback? onDeleted;
   final bool isEditing;
   final TextEditingController? captionController;
   final bool showEditOption;
@@ -22,6 +26,7 @@ class ReelsItem extends StatefulWidget {
   const ReelsItem(
     this.snapshot, {
     this.onEditPressed,
+    this.onDeleted,
     this.isEditing = false,
     this.captionController,
     this.showEditOption = false,
@@ -117,7 +122,8 @@ class _ReelsItemState extends State<ReelsItem> {
   void _deleteReels() {
     if (widget.snapshot['uid'] != user) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Bu reels'i silme yetkiniz yok")),
+        const SnackBar(
+            content: Text("You don't have permission to delete these reels")),
       );
       return;
     }
@@ -128,18 +134,19 @@ class _ReelsItemState extends State<ReelsItem> {
         .delete()
         .then((_) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reels silindi')),
+        const SnackBar(content: Text('Reels deleted')),
       );
+      widget.onDeleted?.call();
     }).catchError((error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hata oluştu: $error')),
+        SnackBar(content: Text('Error occurred: $error')),
       );
     });
   }
 
   void _reportReels() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Reels bildirildi')),
+      const SnackBar(content: Text('Reels reported')),
     );
   }
 
@@ -294,7 +301,7 @@ class _ReelsItemState extends State<ReelsItem> {
                                 widget.showEditOption) ...[
                               ListTile(
                                 leading: const Icon(Icons.edit),
-                                title: const Text('Düzenle'),
+                                title: const Text('Edit'),
                                 onTap: () {
                                   widget.onEditPressed?.call();
                                   Navigator.pop(context);
@@ -304,7 +311,7 @@ class _ReelsItemState extends State<ReelsItem> {
                             if (isCurrentUserOwner) ...[
                               ListTile(
                                 leading: const Icon(Icons.delete),
-                                title: const Text('Sil'),
+                                title: const Text('Delete'),
                                 onTap: () {
                                   _deleteReels();
                                   Navigator.pop(context);
@@ -313,7 +320,7 @@ class _ReelsItemState extends State<ReelsItem> {
                             ],
                             ListTile(
                               leading: const Icon(Icons.flag),
-                              title: const Text('Reels\'i bildir'),
+                              title: const Text('Report'),
                               onTap: () {
                                 _reportReels();
                                 Navigator.pop(context);
@@ -400,7 +407,7 @@ class _ReelsItemState extends State<ReelsItem> {
                       style: const TextStyle(fontSize: 13, color: Colors.white),
                       decoration: const InputDecoration(
                         border: InputBorder.none,
-                        hintText: 'Açıklama ekle...',
+                        hintText: 'Add caption...',
                         hintStyle: TextStyle(color: Colors.white70),
                       ),
                     )

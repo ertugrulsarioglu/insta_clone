@@ -104,8 +104,8 @@ class ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: TabBarView(
                         children: [
-                          _buildPostsGrid(),
-                          _buildReelsGrid(),
+                          _buildPostsGrid,
+                          _buildReelsGrid,
                         ],
                       ),
                     ),
@@ -606,7 +606,7 @@ class ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildPostsGrid() {
+  Widget get _buildPostsGrid {
     return StreamBuilder(
       stream: _firebaseFirestore
           .collection('posts')
@@ -644,7 +644,7 @@ class ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildReelsGrid() {
+  Widget get _buildReelsGrid {
     return StreamBuilder(
       stream: _firebaseFirestore
           .collection('reels')
@@ -671,7 +671,7 @@ class ProfileScreenState extends State<ProfileScreen> {
             return GestureDetector(
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const ReelsScreen(),
+                  builder: (context) => const ReelsScreen(isFromProfile: true),
                 ));
               },
               child: Stack(
